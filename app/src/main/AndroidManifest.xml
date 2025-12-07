@@ -25,7 +25,12 @@
         <!-- MainActivity (kein Launcher mehr) -->
         <activity
             android:name=".MainActivity"
-            android:exported="true" />
+            android:exported="false" />
+
+        <!-- LoginActivity -->
+        <activity
+            android:name=".Login"
+            android:exported="false" />
 
     </application>
 
