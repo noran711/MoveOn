@@ -57,11 +57,11 @@ public class Login extends AppCompatActivity {
             finish();
         });
 
-        // Registrieren-Text (Platzhalter)
-        textRegister.setOnClickListener(v ->
-                Toast.makeText(Login.this,
-                        "Registrierung kommt später 😊",
-                        Toast.LENGTH_SHORT).show()
-        );
+        // Registrieren-Text
+        textRegister.setOnClickListener(v -> {
+            Intent intent = new Intent(Login.this, Registrierung.class);
+            startActivity(intent);
+        });
+
     }
 }
