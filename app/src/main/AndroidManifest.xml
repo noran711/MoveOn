@@ -11,15 +11,27 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MoveOn">
+
+        <!-- Startscreen = Launcher Activity -->
         <activity
-            android:name=".MainActivity"
+            android:name=".start_screen"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- MainActivity (kein Launcher mehr) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+
+        <!-- LoginActivity -->
+        <activity
+            android:name=".Login"
+            android:exported="false" />
+
     </application>
 
 </manifest>
