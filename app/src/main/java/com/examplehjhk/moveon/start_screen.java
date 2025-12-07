@@ -22,7 +22,7 @@ public class start_screen extends AppCompatActivity {
         }
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            Intent intent = new Intent(start_screen.this, MainActivity.class);
+            Intent intent = new Intent(start_screen.this, Login.class);
             startActivity(intent);
             finish(); // Splash schließen, damit man nicht zurückspringen kann
         }, SPLASH_DURATION);
