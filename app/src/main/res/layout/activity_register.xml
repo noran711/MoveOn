@@ -41,7 +41,7 @@
                 android:id="@+id/editFirstName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Vorname"
+                android:hint="First Name"
                 android:inputType="textPersonName" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -64,7 +64,7 @@
                 android:id="@+id/editLastName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Nachname"
+                android:hint="Last Name"
                 android:inputType="textPersonName" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -89,7 +89,7 @@
                 android:id="@+id/editBirthDate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Geburtsdatum"
+                android:hint="Date of Birth"
                 android:focusable="false"
                 android:clickable="true"
                 android:inputType="none" />
@@ -115,7 +115,7 @@
                 android:id="@+id/editPhone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Telefonnummer"
+                android:hint="Phone Number"
                 android:inputType="phone" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -175,7 +175,7 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
-                android:text="THERAPEUT" />
+                android:text="THERAPIST" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
 
@@ -198,7 +198,7 @@
                 android:id="@+id/editUsernameRegister"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Benutzername"
+                android:hint="Username"
                 android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -222,7 +222,7 @@
                 android:id="@+id/editPasswordRegister"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Passwort"
+                android:hint="Password"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -246,7 +246,7 @@
                 android:id="@+id/editPasswordConfirm"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Passwort bestätigen"
+                android:hint="Confirm Password"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -256,7 +256,7 @@
             style="@style/Widget.MaterialComponents.Button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Registrieren"
+            android:text="Register"
             android:textAllCaps="false"
             android:layout_marginTop="24dp"
             app:cornerRadius="28dp"

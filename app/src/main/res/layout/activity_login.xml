@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#DFF3FF"> <!-- hellblauer Hintergrund -->
+    android:background="#DFF3FF">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -41,7 +41,7 @@
             android:id="@+id/editUsername"
             android:layout_width="0dp"
             android:layout_height="48dp"
-            android:hint="Benutzername"
+            android:hint="Username"
             android:background="@android:drawable/edit_text"
             android:padding="12dp"
             android:layout_marginTop="24dp"
@@ -55,7 +55,7 @@
             android:id="@+id/editPassword"
             android:layout_width="0dp"
             android:layout_height="48dp"
-            android:hint="Passwort"
+            android:hint="Password"
             android:background="@android:drawable/edit_text"
             android:padding="12dp"
             android:inputType="textPassword"
@@ -69,7 +69,7 @@
             android:id="@+id/textRole"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Login als:"
+            android:text="Login as:"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="#1A1A1A"
@@ -97,7 +97,7 @@
                 android:id="@+id/radioTherapist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Therapeut"
+                android:text="Therapist"
                 android:layout_marginStart="20dp" />
 
         </RadioGroup>
@@ -118,7 +118,7 @@
             android:id="@+id/textRegister"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Noch kein Konto? Jetzt registrieren"
+            android:text="Don't have an account yet? Register now"
             android:textColor="#005BBB"
             android:textStyle="bold"
             android:layout_marginTop="16dp"
