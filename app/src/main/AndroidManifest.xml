@@ -22,15 +22,21 @@
             </intent-filter>
         </activity>
 
+        <!-- LoginActivity -->
+        <activity
+            android:name=".Login"
+            android:exported="false" />
+
+        <activity
+            android:name=".Registrierung"
+            android:exported="true" />
+
         <!-- MainActivity (kein Launcher mehr) -->
         <activity
             android:name=".MainActivity"
             android:exported="false" />
 
-        <!-- LoginActivity -->
-        <activity
-            android:name=".Login"
-            android:exported="false" />
+
 
     </application>
 

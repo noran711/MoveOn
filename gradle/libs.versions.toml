@@ -21,4 +21,3 @@ compiler = { group = "androidx.databinding", name = "compiler", version.ref = "c
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-
