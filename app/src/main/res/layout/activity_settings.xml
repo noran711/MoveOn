@@ -297,11 +297,11 @@
                             android:id="@+id/romValue"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
                             android:layout_weight="1"
                             android:gravity="end"
-                            android:layout_marginEnd="8dp"
                             android:textSize="16sp"
-                            tools:text="30 grad"/>
+                            tools:text="30°" />
 
                         <ImageView
                             android:layout_width="wrap_content"
@@ -332,11 +332,11 @@
                             android:id="@+id/supportValue"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
                             android:layout_weight="1"
                             android:gravity="end"
-                            android:layout_marginEnd="8dp"
                             android:textSize="16sp"
-                            tools:text="..."/>
+                            tools:text="10 %" />
 
                         <ImageView
                             android:layout_width="wrap_content"
