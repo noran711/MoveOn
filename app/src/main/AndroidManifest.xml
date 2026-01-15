@@ -36,7 +36,12 @@
             android:name=".MainActivity"
             android:exported="false" />
 
-
+        <!-- GameActivity -->
+        <activity
+            android:name=".GameActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
     </application>
 
