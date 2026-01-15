@@ -40,7 +40,7 @@
         <activity
             android:name=".GameActivity"
             android:exported="false"
-            android:screenOrientation="landscape"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
     </application>

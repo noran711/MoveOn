@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -15,17 +16,19 @@ import java.util.Random;
 
 public class GameView extends SurfaceView implements Runnable {
 
+    private static final String TAG = "GameView";
     private Thread gameThread;
     private boolean isPlaying;
     private boolean isGameStarted = false;
-    private SurfaceHolder surfaceHolder;
-    private Paint paint;
+    private final SurfaceHolder surfaceHolder;
+    private final Paint paint;
     private int screenX, screenY;
     private float heartY;
     private float armAngle = 90; // Default angle (middle)
-    private List<Obstacle> obstacles;
+    private final List<Obstacle> obstacles;
     private int score = 0;
-    private Random random;
+    private final Random random;
+    private final Path heartPath = new Path();
 
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -33,6 +36,17 @@ public class GameView extends SurfaceView implements Runnable {
         paint = new Paint();
         random = new Random();
         obstacles = new ArrayList<>();
+        initializeHeartPath(60);
+    }
+
+    private void initializeHeartPath(float size) {
+        heartPath.reset();
+        // Create the heart shape once at (0,0) relative origin
+        heartPath.moveTo(0, size / 4);
+        heartPath.cubicTo(0, -size / 2, -size, -size / 2, -size, size / 2);
+        heartPath.cubicTo(-size, size, 0, size * 1.5f, 0, size * 2);
+        heartPath.cubicTo(0, size * 1.5f, size, size, size, size / 2);
+        heartPath.cubicTo(size, -size / 2, 0, -size / 2, 0, size / 4);
     }
 
     public void setGameStarted(boolean started) {
@@ -102,7 +116,7 @@ public class GameView extends SurfaceView implements Runnable {
             canvas.drawColor(Color.parseColor("#DFF3FF")); // Background
 
             // Draw Heart (Player)
-            drawHeart(canvas, screenX / 4f, heartY, 60);
+            drawHeart(canvas, screenX / 4f, heartY);
 
             // Draw Obstacles
             paint.setColor(Color.parseColor("#9370DB")); // Purple
@@ -120,23 +134,19 @@ public class GameView extends SurfaceView implements Runnable {
         }
     }
 
-    private void drawHeart(Canvas canvas, float x, float y, float size) {
+    private void drawHeart(Canvas canvas, float x, float y) {
         paint.setColor(Color.RED);
-        Path path = new Path();
-        // Simple heart path
-        path.moveTo(x, y + size / 4);
-        path.cubicTo(x, y - size / 2, x - size, y - size / 2, x - size, y + size / 2);
-        path.cubicTo(x - size, y + size, x, y + size * 1.5f, x, y + size * 2);
-        path.cubicTo(x, y + size * 1.5f, x + size, y + size, x + size, y + size / 2);
-        path.cubicTo(x + size, y - size / 2, x, y - size / 2, x, y + size / 4);
-        canvas.drawPath(path, paint);
+        canvas.save();
+        canvas.translate(x, y);
+        canvas.drawPath(heartPath, paint);
+        canvas.restore();
     }
 
     private void sleep() {
         try {
             Thread.sleep(17); // ~60 FPS
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Interrupted in sleep", e);
         }
     }
 
@@ -151,7 +161,7 @@ public class GameView extends SurfaceView implements Runnable {
         try {
             gameThread.join();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error joining thread", e);
         }
     }
 
