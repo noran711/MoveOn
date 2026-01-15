@@ -1,6 +1,3 @@
 <resources>
     <string name="app_name">MoveOn</string>
-    <string name="score_format">Score: %d</string>
-    <string name="start">Start</string>
-    <string name="restart">Restart</string>
 </resources>
