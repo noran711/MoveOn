@@ -24,29 +24,38 @@ public class GameView extends SurfaceView implements Runnable {
     private final Paint paint;
     private int screenX, screenY;
     private float heartY;
-    private float armAngle = 90; // Default angle (middle)
+    private float armAngle = 90;
     private final List<Obstacle> obstacles;
     private int score = 0;
     private final Random random;
     private final Path heartPath = new Path();
 
+    private float gameSpeed = 15f;
+    private float heartScale = 1.0f;
+    private final float baseHeartSize = 60f;
+
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
         surfaceHolder = getHolder();
         paint = new Paint();
+        paint.setAntiAlias(true);
         random = new Random();
         obstacles = new ArrayList<>();
-        initializeHeartPath(60);
+        initializeHeartPath(baseHeartSize);
     }
 
     private void initializeHeartPath(float size) {
         heartPath.reset();
-        // Create the heart shape once at (0,0) relative origin
         heartPath.moveTo(0, size / 4);
         heartPath.cubicTo(0, -size / 2, -size, -size / 2, -size, size / 2);
         heartPath.cubicTo(-size, size, 0, size * 1.5f, 0, size * 2);
         heartPath.cubicTo(0, size * 1.5f, size, size, size, size / 2);
         heartPath.cubicTo(size, -size / 2, 0, -size / 2, 0, size / 4);
+    }
+
+    public void updateDifficulty(float factor) {
+        this.gameSpeed = 15f + (factor * 20f);
+        this.heartScale = 1.0f - (factor * 0.6f);
     }
 
     public void setGameStarted(boolean started) {
@@ -66,39 +75,34 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void update() {
-        // Map arm angle (e.g., 0-180) to screen height
-        // 0 degrees = bottom, 180 degrees = top
         float targetY = screenY - (armAngle / 180f * screenY);
-        
-        // Smooth transition for the heart
         heartY += (targetY - heartY) * 0.1f;
 
         if (!isGameStarted) return;
 
-        // Update obstacles
-        if (obstacles.isEmpty() || obstacles.get(obstacles.size() - 1).x < screenX - 500) {
+        if (obstacles.isEmpty() || obstacles.get(obstacles.size() - 1).x < screenX - (500 + gameSpeed * 10)) {
             obstacles.add(new Obstacle(screenX, screenY));
         }
 
         for (int i = 0; i < obstacles.size(); i++) {
             Obstacle o = obstacles.get(i);
-            o.x -= 15; // Speed
+            o.x -= gameSpeed;
 
-            // Collision check
-            if (o.collides(screenX / 4f, heartY)) {
-                // Game Over - we can reset and stop the game movement
+            if (o.collides(screenX / 4f, heartY, heartScale)) {
                 isGameStarted = false;
-                // Notify Activity if needed (via a callback) to show the start button again
                 if (onGameOverListener != null) {
                     onGameOverListener.onGameOver();
                 }
                 break;
             }
 
-            // Score update
-            if (!o.passed && o.x < screenX / 4f) {
+            if (!o.passed && (o.x + o.width) < screenX / 4f) {
                 o.passed = true;
                 score++;
+                // Callback an Activity, um UI-Score zu aktualisieren
+                if (onScoreChangeListener != null) {
+                    onScoreChangeListener.onScoreChanged(score);
+                }
             }
 
             if (o.x + o.width < 0) {
@@ -113,22 +117,15 @@ public class GameView extends SurfaceView implements Runnable {
             Canvas canvas = surfaceHolder.lockCanvas();
             if (canvas == null) return;
             
-            canvas.drawColor(Color.parseColor("#DFF3FF")); // Background
+            canvas.drawColor(Color.parseColor("#DFF3FF"));
 
-            // Draw Heart (Player)
             drawHeart(canvas, screenX / 4f, heartY);
 
-            // Draw Obstacles
-            paint.setColor(Color.parseColor("#9370DB")); // Purple
+            paint.setColor(Color.parseColor("#9370DB"));
             for (Obstacle o : obstacles) {
                 canvas.drawRect(o.x, 0, o.x + o.width, o.gapY, paint);
                 canvas.drawRect(o.x, o.gapY + o.gapSize, o.x + o.width, screenY, paint);
             }
-
-            // Draw Score
-            paint.setColor(Color.BLACK);
-            paint.setTextSize(64);
-            canvas.drawText("Score: " + score, 50, 100, paint);
 
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
@@ -138,13 +135,14 @@ public class GameView extends SurfaceView implements Runnable {
         paint.setColor(Color.RED);
         canvas.save();
         canvas.translate(x, y);
+        canvas.scale(heartScale, heartScale);
         canvas.drawPath(heartPath, paint);
         canvas.restore();
     }
 
     private void sleep() {
         try {
-            Thread.sleep(17); // ~60 FPS
+            Thread.sleep(17);
         } catch (InterruptedException e) {
             Log.e(TAG, "Interrupted in sleep", e);
         }
@@ -181,6 +179,9 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void resetGame() {
         score = 0;
+        if (onScoreChangeListener != null) {
+            onScoreChangeListener.onScoreChanged(score);
+        }
         obstacles.clear();
         heartY = screenY / 2f;
     }
@@ -195,24 +196,31 @@ public class GameView extends SurfaceView implements Runnable {
             this.gapY = 100 + random.nextInt(screenY - 600);
         }
 
-        boolean collides(float hX, float hY) {
-            // Check if heart is within obstacle's x-range
-            if (hX + 30 > x && hX - 30 < x + width) {
-                // Check if heart is outside the gap (vertical collision)
-                return (hY < gapY || hY + 40 > gapY + gapSize);
+        boolean collides(float hX, float hY, float scale) {
+            float hitBoxSize = 40 * scale; 
+            if (hX + hitBoxSize > x && hX - hitBoxSize < x + width) {
+                return (hY - hitBoxSize < gapY || hY + hitBoxSize > gapY + gapSize);
             }
             return false;
         }
     }
 
-    // Interface for Game Over callback
     public interface OnGameOverListener {
         void onGameOver();
     }
 
+    public interface OnScoreChangeListener {
+        void onScoreChanged(int score);
+    }
+
     private OnGameOverListener onGameOverListener;
+    private OnScoreChangeListener onScoreChangeListener;
 
     public void setOnGameOverListener(OnGameOverListener listener) {
         this.onGameOverListener = listener;
+    }
+
+    public void setOnScoreChangeListener(OnScoreChangeListener listener) {
+        this.onScoreChangeListener = listener;
     }
 }
