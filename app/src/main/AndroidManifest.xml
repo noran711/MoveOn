@@ -12,7 +12,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MoveOn">
 
-        <!-- Startscreen = Launcher Activity -->
         <activity
             android:name=".start_screen"
             android:exported="true">
@@ -22,7 +21,6 @@
             </intent-filter>
         </activity>
 
-        <!-- LoginActivity -->
         <activity
             android:name=".Login"
             android:exported="false" />
@@ -31,12 +29,15 @@
             android:name=".Registrierung"
             android:exported="true" />
 
-        <!-- MainActivity (kein Launcher mehr) -->
         <activity
             android:name=".MainActivity"
             android:exported="false" />
 
-
+        <activity
+            android:name=".GameActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
     </application>
 
