@@ -37,12 +37,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // für dein Projekt: einfach alles neu erstellen
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
         onCreate(db);
     }
 
-    // User speichern
     public boolean insertUser(String firstName, String lastName, String birthDate,
                               String phone, String username, String password,
                               String gender, String role) {
@@ -59,19 +57,18 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("role", role);
 
         long result = db.insert(TABLE_USERS, null, values);
-        return result != -1; // -1 = Fehler
+        return result != -1;
     }
 
-    // User fürs Login holen
     public Cursor getUserForLogin(String username, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
+        // Alle Spalten abfragen, damit der Login-Prozess die Daten ins User-Objekt packen kann
         return db.query(
                 TABLE_USERS,
-                new String[]{"id", "first_name", "role"},  // nur was wir brauchen
+                null, // null fragt alle Spalten ab
                 "username = ? AND password = ?",
                 new String[]{username, password},
                 null, null, null
         );
     }
 }
-
