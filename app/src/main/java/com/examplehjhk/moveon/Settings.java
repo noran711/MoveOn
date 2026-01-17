@@ -46,6 +46,7 @@ public class Settings extends AppCompatActivity {
         supportValue = findViewById(R.id.supportValue);
         switchDarkMode = findViewById(R.id.switchDarkMode);
         Button buttonSave = findViewById(R.id.buttonSave);
+        Button btnLogout = findViewById(R.id.btnDeleteAccount); // In deinem Layout heißt der Logout-Button id/btnDeleteAccount
 
         sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
         
@@ -77,6 +78,18 @@ public class Settings extends AppCompatActivity {
             buttonSave.setOnClickListener(v -> {
                 saveAllSettings();
                 Toast.makeText(this, "Settings saved successfully!", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        // 5. Logout Button Logik
+        if (btnLogout != null) {
+            btnLogout.setOnClickListener(v -> {
+                // Zurück zum Login Screen
+                Intent intent = new Intent(Settings.this, Login.class);
+                // Alle vorherigen Activities löschen, damit man nicht mit "Zurück" wieder reinkommt
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
             });
         }
 
