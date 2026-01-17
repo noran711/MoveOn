@@ -49,11 +49,16 @@ public class Settings extends AppCompatActivity {
 
         sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
         
-        // 1. Gespeicherte Daten oder User-Daten laden
+        // 1. Laden der Einstellungen (Listener vorher entfernen, um Schleife zu vermeiden)
+        switchDarkMode.setOnCheckedChangeListener(null);
         loadSettings();
 
-        // Dark Mode Switch
+        // 2. Dark Mode Switch Listener (nur bei Benutzerinteraktion)
         switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Sofort in SharedPreferences speichern
+            sharedPreferences.edit().putBoolean("dark_mode", isChecked).apply();
+            
+            // Design anwenden
             if (isChecked) {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             } else {
@@ -61,13 +66,13 @@ public class Settings extends AppCompatActivity {
             }
         });
 
-        // 2. Klick-Listener für die Dialoge
+        // 3. Klick-Listener für die Dialoge
         findViewById(R.id.changeUsernameButton).setOnClickListener(v -> showChangeUsernameDialog());
         findViewById(R.id.changePasswordButton).setOnClickListener(v -> showChangePasswordDialog());
         findViewById(R.id.romLayout).setOnClickListener(v -> showChangeRomDialog());
         findViewById(R.id.supportLayout).setOnClickListener(v -> showChangeSupportDialog());
 
-        // 3. Save-Button Logik
+        // 4. Save-Button Logik
         if (buttonSave != null) {
             buttonSave.setOnClickListener(v -> {
                 saveAllSettings();
@@ -79,7 +84,6 @@ public class Settings extends AppCompatActivity {
         ImageView homeButton = findViewById(R.id.btnHome);
         homeButton.setOnClickListener(v -> {
             Intent intent = new Intent(Settings.this, MainActivity.class);
-            // Korrektur: FLAG_ACTIVITY_CLEAR_TOP (großgeschrieben)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();
@@ -104,7 +108,6 @@ public class Settings extends AppCompatActivity {
             } else if ("Therapeut".equalsIgnoreCase(user.role)) {
                 if (btnradioTherapist != null) btnradioTherapist.setChecked(true);
             }
-            saveAllSettings();
         } else {
             lblFullName.setText(sharedPreferences.getString("full_name", "Max Mustermann"));
             usernameValue.setText(sharedPreferences.getString("username", "exampleuser"));
