@@ -68,18 +68,27 @@ public class Login extends AppCompatActivity {
             return;
         }
 
-        String firstName = c.getString(c.getColumnIndexOrThrow("first_name"));
-        String role      = c.getString(c.getColumnIndexOrThrow("role"));
-        boolean isTherapist = "Therapeut".equals(role);
+        // Alle Daten aus der DB holen
+        String fName = c.getString(c.getColumnIndexOrThrow("first_name"));
+        String lName = c.getString(c.getColumnIndexOrThrow("last_name"));
+        String uName = c.getString(c.getColumnIndexOrThrow("username"));
+        String role  = c.getString(c.getColumnIndexOrThrow("role"));
+        String gender = c.getString(c.getColumnIndexOrThrow("gender"));
 
         c.close();
 
-        Toast.makeText(this,
-                "Willkommen, " + firstName + " (" + role + ")",
-                Toast.LENGTH_SHORT).show();
+        // User-Objekt erstellen
+        User loggedInUser = new User();
+        loggedInUser.firstName = fName;
+        loggedInUser.lastName = lName;
+        loggedInUser.username = uName;
+        loggedInUser.role = role;
+        loggedInUser.gender = gender;
+
+        Toast.makeText(this, "Willkommen, " + fName, Toast.LENGTH_SHORT).show();
 
         Intent intent = new Intent(Login.this, MainActivity.class);
-        intent.putExtra("isTherapist", isTherapist);
+        intent.putExtra("user", loggedInUser);
         startActivity(intent);
         finish();
     }

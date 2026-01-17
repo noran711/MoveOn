@@ -1,7 +1,10 @@
 package com.examplehjhk.moveon;
 
+<<<<<<< HEAD
 import android.content.Intent;
+=======
 import android.content.SharedPreferences;
+>>>>>>> settings
 import android.os.Bundle;
 import android.widget.Button;
 
@@ -14,16 +17,10 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    private User currentUser;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Receive User from Intent (from Login)
-        currentUser = (User) getIntent().getSerializableExtra("user");
-
-        // Dark Mode Logic
         SharedPreferences sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
         boolean isDarkMode = sharedPreferences.getBoolean("dark_mode", false);
 
@@ -42,19 +39,9 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Start Game Button
         Button btnPlay = findViewById(R.id.btnPlay);
         btnPlay.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, GameActivity.class);
-            startActivity(intent);
-        });
-
-        // Settings Button
-        Button btnSettings = findViewById(R.id.btnSettings);
-        btnSettings.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, Settings.class);
-            // Pass user data to Settings
-            intent.putExtra("user", currentUser);
             startActivity(intent);
         });
     }
