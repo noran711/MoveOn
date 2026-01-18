@@ -24,9 +24,11 @@ public class GameView extends SurfaceView implements Runnable {
     private final Paint paint;
     private int screenX, screenY;
     private float heartY;
-    private float armAngle = 0; // Startet bei 0 Grad (unten)
+    private float armAngle = 0; 
     private final List<Obstacle> obstacles;
     private int score = 0;
+    private int obstaclesSpawned = 0;
+    private final int MAX_OBSTACLES = 30;
     private final Random random;
     private final Path heartPath = new Path();
 
@@ -48,7 +50,6 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void initializeHeartPath(float size) {
         heartPath.reset();
-        // Spitze des Herzens ist der Ursprung (0,0)
         float offset = size * 2;
         heartPath.moveTo(0, size / 4 - offset);
         heartPath.cubicTo(0, -size / 2 - offset, -size, -size / 2 - offset, -size, size / 2 - offset);
@@ -84,8 +85,6 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void update() {
         float scaledHeight = baseHeartSize * 2 * heartScale;
-        
-        // 0 Grad = Spitze unten (screenY), 90 Grad = Oberkante oben (scaledHeight)
         float minY = scaledHeight; 
         float maxY = screenY;      
         float range = maxY - minY;
@@ -99,8 +98,18 @@ public class GameView extends SurfaceView implements Runnable {
 
         if (!isGameStarted) return;
 
-        if (obstacles.isEmpty() || obstacles.get(obstacles.size() - 1).x < screenX - (500 + gameSpeed * 10)) {
-            obstacles.add(new Obstacle(screenX, screenY, currentROM, scaledHeight));
+        // Level-Logik: Nur spawnen, wenn MAX noch nicht erreicht
+        if (obstaclesSpawned < MAX_OBSTACLES) {
+            if (obstacles.isEmpty() || obstacles.get(obstacles.size() - 1).x < screenX - (500 + gameSpeed * 10)) {
+                obstacles.add(new Obstacle(screenX, screenY, currentROM, scaledHeight));
+                obstaclesSpawned++;
+            }
+        } else if (obstacles.isEmpty()) {
+            // Alle Hindernisse passiert -> Level Ende
+            isGameStarted = false;
+            if (onGameOverListener != null) {
+                onGameOverListener.onGameOver(true); // true = erfolgreich
+            }
         }
 
         for (int i = 0; i < obstacles.size(); i++) {
@@ -110,7 +119,7 @@ public class GameView extends SurfaceView implements Runnable {
             if (o.collides(screenX / 4f, heartY, heartScale)) {
                 isGameStarted = false;
                 if (onGameOverListener != null) {
-                    onGameOverListener.onGameOver();
+                    onGameOverListener.onGameOver(false); // false = kollidiert
                 }
                 break;
             }
@@ -191,6 +200,7 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void resetGame() {
         score = 0;
+        obstaclesSpawned = 0;
         if (onScoreChangeListener != null) {
             onScoreChangeListener.onScoreChanged(score);
         }
@@ -206,19 +216,11 @@ public class GameView extends SurfaceView implements Runnable {
 
         Obstacle(int screenX, int screenY, int rom, float heartHeight) {
             this.x = screenX;
-            
-            // Berechne den Bereich, den der Patient erreichen kann
             float maxY = screenY; 
             float minY_at_ROM = screenY - (rom / 90f * (screenY - heartHeight));
-            
-            // Wähle eine zufällige Zielhöhe für das Herz innerhalb des ROM
             float targetHeartTipY = minY_at_ROM + random.nextFloat() * (maxY - minY_at_ROM);
-            
-            // Platziere die Lücke (Gap) so, dass das Herz (Mitte) genau hindurchpasst
             float heartCenterY = targetHeartTipY - (heartHeight / 2f);
             this.gapY = heartCenterY - (gapSize / 2f);
-            
-            // Clamping, damit Hindernisse nicht außerhalb des Bildschirms hängen
             if (gapY < 0) gapY = 0;
             if (gapY + gapSize > screenY) gapY = screenY - gapSize;
         }
@@ -226,17 +228,16 @@ public class GameView extends SurfaceView implements Runnable {
         boolean collides(float hX, float hY, float scale) {
             float scaledHeight = baseHeartSize * 2 * scale;
             float hitBoxWidth = baseHeartSize * scale; 
-            
             if (hX + hitBoxWidth > x && hX - hitBoxWidth < x + width) {
-                if (hY - scaledHeight < gapY) return true; // Kollision oben
-                if (hY > gapY + gapSize) return true;      // Kollision unten
+                if (hY - scaledHeight < gapY) return true;
+                if (hY > gapY + gapSize) return true;
             }
             return false;
         }
     }
 
     public interface OnGameOverListener {
-        void onGameOver();
+        void onGameOver(boolean success);
     }
 
     public interface OnScoreChangeListener {
