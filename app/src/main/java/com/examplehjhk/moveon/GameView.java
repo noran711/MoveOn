@@ -9,6 +9,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,10 @@ public class GameView extends SurfaceView implements Runnable {
     
     private int currentROM = 90; 
 
+    // Farben aus Ressourcen
+    private int colorBackground;
+    private int colorObstacle;
+
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
         surfaceHolder = getHolder();
@@ -45,6 +50,11 @@ public class GameView extends SurfaceView implements Runnable {
         paint.setAntiAlias(true);
         random = new Random();
         obstacles = new ArrayList<>();
+        
+        // Farben initialisieren
+        colorBackground = ContextCompat.getColor(context, R.color.moveon_background);
+        colorObstacle = ContextCompat.getColor(context, R.color.obstacle_color);
+        
         initializeHeartPath(baseHeartSize);
     }
 
@@ -98,17 +108,15 @@ public class GameView extends SurfaceView implements Runnable {
 
         if (!isGameStarted) return;
 
-        // Level-Logik: Nur spawnen, wenn MAX noch nicht erreicht
         if (obstaclesSpawned < MAX_OBSTACLES) {
             if (obstacles.isEmpty() || obstacles.get(obstacles.size() - 1).x < screenX - (500 + gameSpeed * 10)) {
                 obstacles.add(new Obstacle(screenX, screenY, currentROM, scaledHeight));
                 obstaclesSpawned++;
             }
         } else if (obstacles.isEmpty()) {
-            // Alle Hindernisse passiert -> Level Ende
             isGameStarted = false;
             if (onGameOverListener != null) {
-                onGameOverListener.onGameOver(true); // true = erfolgreich
+                onGameOverListener.onGameOver(true);
             }
         }
 
@@ -119,7 +127,7 @@ public class GameView extends SurfaceView implements Runnable {
             if (o.collides(screenX / 4f, heartY, heartScale)) {
                 isGameStarted = false;
                 if (onGameOverListener != null) {
-                    onGameOverListener.onGameOver(false); // false = kollidiert
+                    onGameOverListener.onGameOver(false);
                 }
                 break;
             }
@@ -143,9 +151,11 @@ public class GameView extends SurfaceView implements Runnable {
         if (surfaceHolder.getSurface().isValid()) {
             Canvas canvas = surfaceHolder.lockCanvas();
             if (canvas == null) return;
-            canvas.drawColor(Color.parseColor("#DFF3FF"));
+            
+            canvas.drawColor(colorBackground);
             drawHeart(canvas, screenX / 4f, heartY);
-            paint.setColor(Color.parseColor("#9370DB"));
+            
+            paint.setColor(colorObstacle);
             for (Obstacle o : obstacles) {
                 canvas.drawRect(o.x, 0, o.x + o.width, o.gapY, paint);
                 canvas.drawRect(o.x, o.gapY + o.gapSize, o.x + o.width, screenY, paint);

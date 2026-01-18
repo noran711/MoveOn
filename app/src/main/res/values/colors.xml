@@ -2,4 +2,12 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Primäre Markenfarben (basierend auf dem Logo) -->
+    <color name="moveon_primary">#005BBB</color> <!-- Das Blau aus dem Logo -->
+    <color name="moveon_accent">#004A99</color>
+    <color name="moveon_background">#DFF3FF</color>
+    
+    <!-- Hindernisse (Kontrastreich zum Blau) -->
+    <color name="obstacle_color">#FF8C00</color> <!-- Ein warmes Orange/Bernstein -->
 </resources>
