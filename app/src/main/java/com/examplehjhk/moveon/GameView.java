@@ -24,7 +24,7 @@ public class GameView extends SurfaceView implements Runnable {
     private final Paint paint;
     private int screenX, screenY;
     private float heartY;
-    private float armAngle = 90;
+    private float armAngle = 0; // Startet bei 0 Grad (unten)
     private final List<Obstacle> obstacles;
     private int score = 0;
     private final Random random;
@@ -33,6 +33,8 @@ public class GameView extends SurfaceView implements Runnable {
     private float gameSpeed = 15f;
     private float heartScale = 1.0f;
     private final float baseHeartSize = 60f;
+    
+    private int currentROM = 90; 
 
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -46,11 +48,17 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void initializeHeartPath(float size) {
         heartPath.reset();
-        heartPath.moveTo(0, size / 4);
-        heartPath.cubicTo(0, -size / 2, -size, -size / 2, -size, size / 2);
-        heartPath.cubicTo(-size, size, 0, size * 1.5f, 0, size * 2);
-        heartPath.cubicTo(0, size * 1.5f, size, size, size, size / 2);
-        heartPath.cubicTo(size, -size / 2, 0, -size / 2, 0, size / 4);
+        // Spitze des Herzens ist der Ursprung (0,0)
+        float offset = size * 2;
+        heartPath.moveTo(0, size / 4 - offset);
+        heartPath.cubicTo(0, -size / 2 - offset, -size, -size / 2 - offset, -size, size / 2 - offset);
+        heartPath.cubicTo(-size, size - offset, 0, size * 1.5f - offset, 0, size * 2 - offset); 
+        heartPath.cubicTo(0, size * 1.5f - offset, size, size - offset, size, size / 2 - offset);
+        heartPath.cubicTo(size, -size / 2 - offset, 0, -size / 2 - offset, 0, size / 4 - offset);
+    }
+
+    public void setROM(int rom) {
+        this.currentROM = rom;
     }
 
     public void updateDifficulty(float factor) {
@@ -75,13 +83,24 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void update() {
-        float targetY = screenY - (armAngle / 180f * screenY);
+        float scaledHeight = baseHeartSize * 2 * heartScale;
+        
+        // 0 Grad = Spitze unten (screenY), 90 Grad = Oberkante oben (scaledHeight)
+        float minY = scaledHeight; 
+        float maxY = screenY;      
+        float range = maxY - minY;
+        
+        float targetY = maxY - (armAngle / 90f * range);
+        
+        if (targetY < minY) targetY = minY;
+        if (targetY > maxY) targetY = maxY;
+
         heartY += (targetY - heartY) * 0.1f;
 
         if (!isGameStarted) return;
 
         if (obstacles.isEmpty() || obstacles.get(obstacles.size() - 1).x < screenX - (500 + gameSpeed * 10)) {
-            obstacles.add(new Obstacle(screenX, screenY));
+            obstacles.add(new Obstacle(screenX, screenY, currentROM, scaledHeight));
         }
 
         for (int i = 0; i < obstacles.size(); i++) {
@@ -115,18 +134,13 @@ public class GameView extends SurfaceView implements Runnable {
         if (surfaceHolder.getSurface().isValid()) {
             Canvas canvas = surfaceHolder.lockCanvas();
             if (canvas == null) return;
-            
             canvas.drawColor(Color.parseColor("#DFF3FF"));
             drawHeart(canvas, screenX / 4f, heartY);
-
             paint.setColor(Color.parseColor("#9370DB"));
             for (Obstacle o : obstacles) {
                 canvas.drawRect(o.x, 0, o.x + o.width, o.gapY, paint);
                 canvas.drawRect(o.x, o.gapY + o.gapSize, o.x + o.width, screenY, paint);
             }
-
-            // DER SCORE-ZEICHNEN-BLOCK WURDE HIER ENTFERNT (er ist jetzt im Layout)
-            
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
     }
@@ -168,12 +182,10 @@ public class GameView extends SurfaceView implements Runnable {
         super.onSizeChanged(w, h, oldw, oldh);
         screenX = w;
         screenY = h;
-        heartY = h / 2f;
+        heartY = h; 
     }
 
     public void setArmAngle(float angle) {
-        if (angle < 0) angle = 0;
-        if (angle > 180) angle = 180;
         this.armAngle = angle;
     }
 
@@ -183,7 +195,8 @@ public class GameView extends SurfaceView implements Runnable {
             onScoreChangeListener.onScoreChanged(score);
         }
         obstacles.clear();
-        heartY = screenY / 2f;
+        heartY = screenY; 
+        armAngle = 0;
     }
 
     private class Obstacle {
@@ -191,15 +204,32 @@ public class GameView extends SurfaceView implements Runnable {
         float gapY, gapSize = 400;
         boolean passed = false;
 
-        Obstacle(int screenX, int screenY) {
+        Obstacle(int screenX, int screenY, int rom, float heartHeight) {
             this.x = screenX;
-            this.gapY = 100 + random.nextInt(screenY - 600);
+            
+            // Berechne den Bereich, den der Patient erreichen kann
+            float maxY = screenY; 
+            float minY_at_ROM = screenY - (rom / 90f * (screenY - heartHeight));
+            
+            // Wähle eine zufällige Zielhöhe für das Herz innerhalb des ROM
+            float targetHeartTipY = minY_at_ROM + random.nextFloat() * (maxY - minY_at_ROM);
+            
+            // Platziere die Lücke (Gap) so, dass das Herz (Mitte) genau hindurchpasst
+            float heartCenterY = targetHeartTipY - (heartHeight / 2f);
+            this.gapY = heartCenterY - (gapSize / 2f);
+            
+            // Clamping, damit Hindernisse nicht außerhalb des Bildschirms hängen
+            if (gapY < 0) gapY = 0;
+            if (gapY + gapSize > screenY) gapY = screenY - gapSize;
         }
 
         boolean collides(float hX, float hY, float scale) {
-            float hitBoxSize = 40 * scale; 
-            if (hX + hitBoxSize > x && hX - hitBoxSize < x + width) {
-                return (hY - hitBoxSize < gapY || hY + hitBoxSize > gapY + gapSize);
+            float scaledHeight = baseHeartSize * 2 * scale;
+            float hitBoxWidth = baseHeartSize * scale; 
+            
+            if (hX + hitBoxWidth > x && hX - hitBoxWidth < x + width) {
+                if (hY - scaledHeight < gapY) return true; // Kollision oben
+                if (hY > gapY + gapSize) return true;      // Kollision unten
             }
             return false;
         }
