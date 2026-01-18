@@ -1,5 +1,6 @@
 package com.examplehjhk.moveon;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
@@ -14,6 +15,7 @@ public class GameActivity extends AppCompatActivity {
     private TextView scoreText;
     private TextView romInfoText;
     private TextView supportInfoText;
+    private int currentScore = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,11 +33,9 @@ public class GameActivity extends AppCompatActivity {
         String romString = prefs.getString("rom", "90°");
         String supportString = prefs.getString("support", "10%");
         
-        // Anzeige aktualisieren
         romInfoText.setText("ROM: " + romString);
         supportInfoText.setText("Support: " + supportString);
         
-        // ROM-Wert für die Spiel-Logik umwandeln
         int romValue = 90;
         try {
             romValue = Integer.parseInt(romString.replace("°", "").trim());
@@ -43,7 +43,6 @@ public class GameActivity extends AppCompatActivity {
             romValue = 90;
         }
 
-        // ROM an GameView übergeben
         gameView.setROM(romValue);
 
         btnStart.setOnClickListener(v -> {
@@ -51,14 +50,20 @@ public class GameActivity extends AppCompatActivity {
             gameView.setGameStarted(true);
         });
 
+        // HIER WURDE DER FEEDBACK SCREEN WIEDER EINGEBAUT
         gameView.setOnGameOverListener(() -> {
             runOnUiThread(() -> {
-                btnStart.setText("Restart");
-                btnStart.setVisibility(View.VISIBLE);
+                Intent intent = new Intent(GameActivity.this, FeedbackActivity.class);
+                intent.putExtra("score", currentScore);
+                intent.putExtra("rom", romString);
+                intent.putExtra("support", supportString);
+                startActivity(intent);
+                finish(); // Schließt das Spiel, damit man zum Feedback-Screen kommt
             });
         });
 
         gameView.setOnScoreChangeListener(score -> {
+            currentScore = score;
             runOnUiThread(() -> {
                 scoreText.setText("Score: " + score);
             });
