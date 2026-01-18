@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -20,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
 
     private User currentUser;
     private TextView streakCountText;
+    private ScrollView levelScrollView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,19 +39,22 @@ public class MainActivity extends AppCompatActivity {
         
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom); // Top padding 0 for fixed header
             return insets;
         });
 
-        // Streak UI initialisieren
+        // UI-Elemente
         streakCountText = findViewById(R.id.streakCountText);
+        levelScrollView = findViewById(R.id.levelScrollView);
         checkAndRefreshStreak();
 
-        // Level Buttons (Level 1)
+        // Level 1 Button
         Button btnPlay = findViewById(R.id.btnPlay);
         btnPlay.setOnClickListener(v -> {
             updateStreakOnPlay();
             Intent intent = new Intent(MainActivity.this, GameActivity.class);
+            intent.putExtra("user", currentUser);
+            intent.putExtra("nextLevel", 1);
             startActivity(intent);
         });
 
@@ -60,11 +65,19 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("user", currentUser);
             startActivity(intent);
         });
+
+        // Automatisches Scrollen zum aktuellen Level (Beispiel Level 1)
+        scrollToCurrentLevel();
     }
 
-    /**
-     * Prüft beim Öffnen der App, ob der Streak gerissen ist.
-     */
+    private void scrollToCurrentLevel() {
+        // Hier könnte man später das gespeicherte Level abfragen
+        levelScrollView.post(() -> {
+            // Scrollt zum Anfang (Level 1)
+            levelScrollView.fullScroll(ScrollView.FOCUS_UP);
+        });
+    }
+
     private void checkAndRefreshStreak() {
         SharedPreferences prefs = getSharedPreferences("streaks", MODE_PRIVATE);
         int currentStreak = prefs.getInt("streak_count", 0);
@@ -75,12 +88,10 @@ public class MainActivity extends AppCompatActivity {
             Calendar lastPlayed = getStartOfDay(Calendar.getInstance());
             lastPlayed.setTimeInMillis(lastPlayedMillis);
 
-            // Differenz in Tagen berechnen
             long diff = today.getTimeInMillis() - lastPlayed.getTimeInMillis();
             long daysDiff = diff / (24 * 60 * 60 * 1000);
 
             if (daysDiff > 1) {
-                // Länger als einen Tag Pause gemacht -> Streak zurücksetzen
                 currentStreak = 0;
                 prefs.edit().putInt("streak_count", 0).apply();
             }
@@ -88,9 +99,6 @@ public class MainActivity extends AppCompatActivity {
         streakCountText.setText(String.valueOf(currentStreak));
     }
 
-    /**
-     * Wird aufgerufen, wenn ein Spiel gestartet wird.
-     */
     private void updateStreakOnPlay() {
         SharedPreferences prefs = getSharedPreferences("streaks", MODE_PRIVATE);
         int currentStreak = prefs.getInt("streak_count", 0);
@@ -99,23 +107,18 @@ public class MainActivity extends AppCompatActivity {
         Calendar today = getStartOfDay(Calendar.getInstance());
         
         if (lastPlayedMillis == 0) {
-            // Allererstes Mal spielen
             currentStreak = 1;
         } else {
             Calendar lastPlayed = getStartOfDay(Calendar.getInstance());
             lastPlayed.setTimeInMillis(lastPlayedMillis);
-
             long diff = today.getTimeInMillis() - lastPlayed.getTimeInMillis();
             long daysDiff = diff / (24 * 60 * 60 * 1000);
 
             if (daysDiff == 1) {
-                // Genau ein Tag später -> Streak +1
                 currentStreak++;
             } else if (daysDiff > 1) {
-                // Streak war gerissen -> Neustart bei 1
                 currentStreak = 1;
             }
-            // Bei daysDiff == 0 (heute schon gespielt) bleibt der Streak gleich
         }
 
         prefs.edit()

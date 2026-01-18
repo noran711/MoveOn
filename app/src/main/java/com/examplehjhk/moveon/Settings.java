@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
@@ -28,6 +29,7 @@ public class Settings extends AppCompatActivity {
     private TextView romIncreaseValue;
     private TextView supportValue;
     private SwitchMaterial switchDarkMode;
+    private CheckBox chkNotifications;
     private SharedPreferences sharedPreferences;
 
     @Override
@@ -35,6 +37,7 @@ public class Settings extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        // UI-Elemente initialisieren
         lblFullName = findViewById(R.id.lblFullName);
         usernameValue = findViewById(R.id.usernameValue);
         passwordValue = findViewById(R.id.passwordValue);
@@ -46,14 +49,17 @@ public class Settings extends AppCompatActivity {
         romIncreaseValue = findViewById(R.id.romIncreaseValue);
         supportValue = findViewById(R.id.supportValue);
         switchDarkMode = findViewById(R.id.switchDarkMode);
+        chkNotifications = findViewById(R.id.chkNotifications);
         Button buttonSave = findViewById(R.id.buttonSave);
         Button btnLogout = findViewById(R.id.btnDeleteAccount);
 
         sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
         
+        // 1. Laden der Einstellungen (Listener vorher entfernen)
         switchDarkMode.setOnCheckedChangeListener(null);
         loadSettings();
 
+        // 2. Dark Mode Switch Listener
         switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
             sharedPreferences.edit().putBoolean("dark_mode", isChecked).apply();
             if (isChecked) {
@@ -63,12 +69,14 @@ public class Settings extends AppCompatActivity {
             }
         });
 
+        // 3. Klick-Listener für die Dialoge
         findViewById(R.id.changeUsernameButton).setOnClickListener(v -> showChangeUsernameDialog());
         findViewById(R.id.changePasswordButton).setOnClickListener(v -> showChangePasswordDialog());
         findViewById(R.id.romLayout).setOnClickListener(v -> showChangeRomDialog());
         findViewById(R.id.romIncreaseLayout).setOnClickListener(v -> showChangeRomIncreaseDialog());
         findViewById(R.id.supportLayout).setOnClickListener(v -> showChangeSupportDialog());
 
+        // 4. Save-Button Logik
         if (buttonSave != null) {
             buttonSave.setOnClickListener(v -> {
                 saveAllSettings();
@@ -76,6 +84,7 @@ public class Settings extends AppCompatActivity {
             });
         }
 
+        // 5. Logout Button
         if (btnLogout != null) {
             btnLogout.setOnClickListener(v -> {
                 Intent intent = new Intent(Settings.this, Login.class);
@@ -85,6 +94,7 @@ public class Settings extends AppCompatActivity {
             });
         }
 
+        // Home Button
         ImageView homeButton = findViewById(R.id.btnHome);
         homeButton.setOnClickListener(v -> {
             Intent intent = new Intent(Settings.this, MainActivity.class);
@@ -118,6 +128,9 @@ public class Settings extends AppCompatActivity {
         }
 
         switchDarkMode.setChecked(sharedPreferences.getBoolean("dark_mode", false));
+        if (chkNotifications != null) {
+            chkNotifications.setChecked(sharedPreferences.getBoolean("allow_notifications", true));
+        }
         romValue.setText(sharedPreferences.getString("rom", "30°"));
         romIncreaseValue.setText(sharedPreferences.getString("rom_increase", "5°"));
         supportValue.setText(sharedPreferences.getString("support", "10 %"));
@@ -127,6 +140,9 @@ public class Settings extends AppCompatActivity {
     private void saveAllSettings() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean("dark_mode", switchDarkMode.isChecked());
+        if (chkNotifications != null) {
+            editor.putBoolean("allow_notifications", chkNotifications.isChecked());
+        }
         editor.putString("username", usernameValue.getText().toString());
         editor.putString("full_name", lblFullName.getText().toString());
         editor.putString("rom", romValue.getText().toString());
