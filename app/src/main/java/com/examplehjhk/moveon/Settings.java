@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
@@ -25,8 +26,10 @@ public class Settings extends AppCompatActivity {
     private RadioButton btnradioMale;
     private RadioButton btnradioFemale;
     private TextView romValue;
+    private TextView romIncreaseValue;
     private TextView supportValue;
     private SwitchMaterial switchDarkMode;
+    private CheckBox chkNotifications;
     private SharedPreferences sharedPreferences;
 
     @Override
@@ -43,23 +46,22 @@ public class Settings extends AppCompatActivity {
         btnradioMale = findViewById(R.id.btnradioMale);
         btnradioFemale = findViewById(R.id.btnradioFemale);
         romValue = findViewById(R.id.romValue);
+        romIncreaseValue = findViewById(R.id.romIncreaseValue);
         supportValue = findViewById(R.id.supportValue);
         switchDarkMode = findViewById(R.id.switchDarkMode);
+        chkNotifications = findViewById(R.id.chkNotifications);
         Button buttonSave = findViewById(R.id.buttonSave);
-        Button btnLogout = findViewById(R.id.btnDeleteAccount); // In deinem Layout heißt der Logout-Button id/btnDeleteAccount
+        Button btnLogout = findViewById(R.id.btnDeleteAccount);
 
         sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
         
-        // 1. Laden der Einstellungen (Listener vorher entfernen, um Schleife zu vermeiden)
+        // 1. Laden der Einstellungen (Listener vorher entfernen)
         switchDarkMode.setOnCheckedChangeListener(null);
         loadSettings();
 
-        // 2. Dark Mode Switch Listener (nur bei Benutzerinteraktion)
+        // 2. Dark Mode Switch Listener
         switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Sofort in SharedPreferences speichern
             sharedPreferences.edit().putBoolean("dark_mode", isChecked).apply();
-            
-            // Design anwenden
             if (isChecked) {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             } else {
@@ -71,6 +73,7 @@ public class Settings extends AppCompatActivity {
         findViewById(R.id.changeUsernameButton).setOnClickListener(v -> showChangeUsernameDialog());
         findViewById(R.id.changePasswordButton).setOnClickListener(v -> showChangePasswordDialog());
         findViewById(R.id.romLayout).setOnClickListener(v -> showChangeRomDialog());
+        findViewById(R.id.romIncreaseLayout).setOnClickListener(v -> showChangeRomIncreaseDialog());
         findViewById(R.id.supportLayout).setOnClickListener(v -> showChangeSupportDialog());
 
         // 4. Save-Button Logik
@@ -81,12 +84,10 @@ public class Settings extends AppCompatActivity {
             });
         }
 
-        // 5. Logout Button Logik
+        // 5. Logout Button
         if (btnLogout != null) {
             btnLogout.setOnClickListener(v -> {
-                // Zurück zum Login Screen
                 Intent intent = new Intent(Settings.this, Login.class);
-                // Alle vorherigen Activities löschen, damit man nicht mit "Zurück" wieder reinkommt
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 finish();
@@ -109,13 +110,11 @@ public class Settings extends AppCompatActivity {
         if (user != null) {
             lblFullName.setText(user.firstName + " " + user.lastName);
             usernameValue.setText(user.username);
-            
             if ("Male".equalsIgnoreCase(user.gender)) {
                 if (btnradioMale != null) btnradioMale.setChecked(true);
             } else {
                 if (btnradioFemale != null) btnradioFemale.setChecked(true);
             }
-            
             if ("Patient".equalsIgnoreCase(user.role)) {
                 if (btnradioPatient != null) btnradioPatient.setChecked(true);
             } else if ("Therapeut".equalsIgnoreCase(user.role)) {
@@ -124,13 +123,16 @@ public class Settings extends AppCompatActivity {
         } else {
             lblFullName.setText(sharedPreferences.getString("full_name", "Max Mustermann"));
             usernameValue.setText(sharedPreferences.getString("username", "exampleuser"));
-            
             if (btnradioMale != null) btnradioMale.setChecked(sharedPreferences.getBoolean("is_male", false));
             if (btnradioPatient != null) btnradioPatient.setChecked(sharedPreferences.getBoolean("is_patient", true));
         }
 
         switchDarkMode.setChecked(sharedPreferences.getBoolean("dark_mode", false));
+        if (chkNotifications != null) {
+            chkNotifications.setChecked(sharedPreferences.getBoolean("allow_notifications", true));
+        }
         romValue.setText(sharedPreferences.getString("rom", "30°"));
+        romIncreaseValue.setText(sharedPreferences.getString("rom_increase", "5°"));
         supportValue.setText(sharedPreferences.getString("support", "10 %"));
         passwordValue.setText("••••••••");
     }
@@ -138,9 +140,13 @@ public class Settings extends AppCompatActivity {
     private void saveAllSettings() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean("dark_mode", switchDarkMode.isChecked());
+        if (chkNotifications != null) {
+            editor.putBoolean("allow_notifications", chkNotifications.isChecked());
+        }
         editor.putString("username", usernameValue.getText().toString());
         editor.putString("full_name", lblFullName.getText().toString());
         editor.putString("rom", romValue.getText().toString());
+        editor.putString("rom_increase", romIncreaseValue.getText().toString());
         editor.putString("support", supportValue.getText().toString());
         if (btnradioPatient != null) editor.putBoolean("is_patient", btnradioPatient.isChecked());
         if (btnradioMale != null) editor.putBoolean("is_male", btnradioMale.isChecked());
@@ -160,11 +166,22 @@ public class Settings extends AppCompatActivity {
 
     private void showChangeRomDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Change ROM");
+        builder.setTitle("Change Initial ROM");
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
         builder.setView(input);
         builder.setPositiveButton("Update", (dialog, which) -> romValue.setText(input.getText().toString().trim() + "°"));
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        builder.show();
+    }
+
+    private void showChangeRomIncreaseDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("ROM Increase per Level");
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        builder.setView(input);
+        builder.setPositiveButton("Update", (dialog, which) -> romIncreaseValue.setText(input.getText().toString().trim() + "°"));
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
         builder.show();
     }

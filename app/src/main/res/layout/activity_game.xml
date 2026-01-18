@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/game_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,42 +11,65 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Leiste für ROM und Support oben links/rechts -->
-    <LinearLayout
+    <!-- Header Leiste: ROM, Support und Level in einer CardView für konsistenten Stil -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:layout_marginTop="8dp">
+        android:layout_margin="12dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp">
 
-        <TextView
-            android:id="@+id/romInfoText"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="ROM: 90°"
-            android:textColor="#555555"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/supportInfoText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Support: 10%"
-            android:textColor="#555555"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/romInfoText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="ROM: 90°"
+                android:textColor="#1A1A1A"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/supportInfoText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Support: 10%"
+                android:textColor="#1A1A1A"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
+            <TextView
+                android:id="@+id/levelInfoText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text="Level: 1"
+                android:textColor="#1A1A1A"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Fortschrittsanzeige (Score) -->
     <TextView
         android:id="@+id/scoreText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="32dp"
-        android:text="Score: 0"
+        android:layout_marginTop="80dp"
+        android:text="0 / 30"
         android:textColor="#1A1A1A"
         android:textSize="24sp"
         android:textStyle="bold" />
@@ -56,7 +80,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:padding="16dp"
-        android:text="Start"
+        android:text="Start Level"
         android:textSize="20sp" />
 
 </FrameLayout>

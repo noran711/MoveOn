@@ -5,45 +5,194 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#DFF3FF"
+    android:background="#F0F8FF"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/textWelcome"
-        android:layout_width="wrap_content"
+    <!-- Header Section -->
+    <RelativeLayout
+        android:id="@+id/header"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Welcome to MoveOn!"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="#1A1A1A"
-        app:layout_constraintBottom_toTopOf="@+id/btnPlay"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed" />
+        android:background="#FFFFFF"
+        android:elevation="2dp"
+        android:padding="12dp"
+        android:translationZ="10dp"
+        app:layout_constraintTop_toTopOf="parent">
 
-    <Button
-        android:id="@+id/btnPlay"
-        android:layout_width="200dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="32dp"
-        android:text="Start Game"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toTopOf="@+id/btnSettings"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textWelcome" />
+        <ImageView
+            android:id="@+id/logoMain"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/logo"
+            android:contentDescription="MoveOn Logo" />
 
-    <Button
-        android:id="@+id/btnSettings"
-        android:layout_width="200dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="16dp"
-        android:text="Settings"
-        android:textSize="18sp"
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textWelcome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MoveOn"
+                android:textColor="#2C3E50"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/streakContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:background="@drawable/streak_badge_bg"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔥"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/streakCountText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="0"
+                    android:textColor="#E67E22"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnSettings"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_manage"
+            app:tint="#A29BFE"
+            android:contentDescription="Settings" />
+    </RelativeLayout>
+
+    <!-- Path of Levels -->
+    <ScrollView
+        android:id="@+id/levelScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:scrollbars="none"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnPlay" />
+        app:layout_constraintTop_toBottomOf="@id/header">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="200dp">
+
+            <!-- Level 1 Circle (Aktuelles Level) -->
+            <Button
+                android:id="@+id/btnPlay"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="40dp"
+                android:background="@drawable/circle_button"
+                android:text="1"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:elevation="0dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintHorizontal_bias="0.5" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start"
+                android:textColor="#2C3E50"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:layout_constraintTop_toBottomOf="@id/btnPlay"
+                app:layout_constraintStart_toStartOf="@id/btnPlay"
+                app:layout_constraintEnd_toEndOf="@id/btnPlay" />
+
+            <!-- Level 2 Circle (Ausgegraut) -->
+            <Button
+                android:id="@+id/level2"
+                android:layout_width="85dp"
+                android:layout_height="85dp"
+                android:layout_marginTop="120dp"
+                android:background="@drawable/circle_button"
+                android:backgroundTint="#D1D8E0"
+                android:alpha="0.5"
+                android:text="2"
+                android:textColor="#7F8C8D"
+                android:textSize="20sp"
+                android:elevation="0dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btnPlay"
+                app:layout_constraintHorizontal_bias="0.25" />
+
+            <!-- Level 3 Circle (Ausgegraut) -->
+            <Button
+                android:id="@+id/level3"
+                android:layout_width="85dp"
+                android:layout_height="85dp"
+                android:layout_marginTop="100dp"
+                android:background="@drawable/circle_button"
+                android:backgroundTint="#D1D8E0"
+                android:alpha="0.5"
+                android:text="3"
+                android:textColor="#7F8C8D"
+                android:textSize="20sp"
+                android:elevation="0dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/level2"
+                app:layout_constraintHorizontal_bias="0.75" />
+
+            <!-- Level 4 Circle (Ausgegraut) -->
+            <Button
+                android:id="@+id/level4"
+                android:layout_width="85dp"
+                android:layout_height="85dp"
+                android:layout_marginTop="100dp"
+                android:background="@drawable/circle_button"
+                android:backgroundTint="#D1D8E0"
+                android:alpha="0.5"
+                android:text="4"
+                android:textColor="#7F8C8D"
+                android:textSize="20sp"
+                android:elevation="0dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/level3"
+                app:layout_constraintHorizontal_bias="0.3" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="60dp"
+                android:text="More exercises coming soon..."
+                android:textColor="#95A5A6"
+                android:textSize="14sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/level4" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

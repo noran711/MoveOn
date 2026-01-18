@@ -14,6 +14,7 @@
         android:elevation="4dp"
         android:padding="16dp">
         <TextView
+            android:id="@+id/feedbackTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
@@ -46,12 +47,22 @@
                 android:gravity="center">
 
                 <TextView
+                    android:id="@+id/statusText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Good Job!"
                     android:textColor="#9370DB"
                     android:textSize="32sp"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/levelDisplayText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Level 1"
+                    android:textColor="#555555"
+                    android:textSize="20sp"
+                    android:layout_marginTop="8dp" />
 
                 <View
                     android:layout_width="100dp"
@@ -63,7 +74,7 @@
                     android:id="@+id/finalScoreText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Score: 0"
+                    android:text="Score: 0 / 30"
                     android:textColor="#1A1A1A"
                     android:textSize="28sp"
                     android:textStyle="bold" />
@@ -116,7 +127,7 @@
             android:id="@+id/btnRestart"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="Restart Game"
+            android:text="Next Level"
             android:textSize="18sp"
             android:backgroundTint="#9370DB"
             app:cornerRadius="12dp" />
