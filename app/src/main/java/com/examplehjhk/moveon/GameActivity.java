@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import android.content.Intent;
 
 public class GameActivity extends AppCompatActivity {
 
@@ -14,7 +15,7 @@ public class GameActivity extends AppCompatActivity {
     private TextView scoreText;
     private TextView romInfoText;
     private TextView supportInfoText;
-<<<<<<< Updated upstream
+
     private TextView levelInfoText;
     
     private int currentScore = 0;
@@ -22,8 +23,7 @@ public class GameActivity extends AppCompatActivity {
     private int currentROMValue = 90;
     private int romIncreaseValue = 5;
     private String supportString = "10%";
-=======
->>>>>>> Stashed changes
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,19 +43,11 @@ public class GameActivity extends AppCompatActivity {
         String increaseString = prefs.getString("rom_increase", "5°");
         supportString = prefs.getString("support", "10%");
         
-<<<<<<< Updated upstream
+
         // Initial Level and values from intent or prefs
         currentLevel = getIntent().getIntExtra("nextLevel", 1);
-        
-        // Parse ROM values
-=======
-        // Anzeige aktualisieren
-        romInfoText.setText("ROM: " + romString);
-        supportInfoText.setText("Support: " + supportString);
-        
-        // ROM-Wert für die Spiel-Logik umwandeln
-        int romValue = 90;
->>>>>>> Stashed changes
+
+
         try {
             currentROMValue = Integer.parseInt(romString.replace("°", "").trim());
             romIncreaseValue = Integer.parseInt(increaseString.replace("°", "").trim());
@@ -64,7 +56,7 @@ public class GameActivity extends AppCompatActivity {
             romIncreaseValue = 5;
         }
 
-<<<<<<< Updated upstream
+
         // Apply ROM increase based on level
         if (currentLevel > 1) {
             currentROMValue += (currentLevel - 1) * romIncreaseValue;
@@ -78,17 +70,13 @@ public class GameActivity extends AppCompatActivity {
         scoreText.setText("0 / 30");
 
         gameView.setROM(currentROMValue);
-=======
-        // ROM an GameView übergeben
-        gameView.setROM(romValue);
->>>>>>> Stashed changes
 
         btnStart.setOnClickListener(v -> {
             btnStart.setVisibility(View.GONE);
             gameView.setGameStarted(true);
         });
 
-<<<<<<< Updated upstream
+
         gameView.setOnGameOverListener(success -> {
             runOnUiThread(() -> {
                 Intent intent = new Intent(GameActivity.this, FeedbackActivity.class);
@@ -99,12 +87,6 @@ public class GameActivity extends AppCompatActivity {
                 intent.putExtra("success", success);
                 startActivity(intent);
                 finish();
-=======
-        gameView.setOnGameOverListener(() -> {
-            runOnUiThread(() -> {
-                btnStart.setText("Restart");
-                btnStart.setVisibility(View.VISIBLE);
->>>>>>> Stashed changes
             });
         });
 
