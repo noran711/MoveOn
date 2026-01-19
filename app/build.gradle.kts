@@ -44,7 +44,7 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.compiler)
-
+    implementation("com.github.mik3y:usb-serial-for-android:3.7.0")
     // Room Database
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")

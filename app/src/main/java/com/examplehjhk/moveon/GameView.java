@@ -9,6 +9,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
 import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
@@ -18,14 +19,25 @@ import java.util.Random;
 public class GameView extends SurfaceView implements Runnable {
 
     private static final String TAG = "GameView";
+
     private Thread gameThread;
     private boolean isPlaying;
     private boolean isGameStarted = false;
+
     private final SurfaceHolder surfaceHolder;
     private final Paint paint;
+
     private int screenX, screenY;
+
     private float heartY;
-    private float armAngle = 0; 
+    private float armAngle = 0f; // 0..90 vom Arduino
+
+    // ===== Poti/Slider -> kontinuierlich (smooth) =====
+    // Zielwert aus GameActivity (0..1)
+    private volatile float thumbSliderTarget = 0f;
+    // geglätteter Wert (0..1)
+    private float thumbSliderSmooth = 0f;
+
     private final List<Obstacle> obstacles;
     private int score = 0;
     private int obstaclesSpawned = 0;
@@ -36,8 +48,8 @@ public class GameView extends SurfaceView implements Runnable {
     private float gameSpeed = 15f;
     private float heartScale = 1.0f;
     private final float baseHeartSize = 60f;
-    
-    private int currentROM = 90; 
+
+    private int currentROM = 90;
 
     // Farben aus Ressourcen
     private int colorBackground;
@@ -45,16 +57,17 @@ public class GameView extends SurfaceView implements Runnable {
 
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
+
         surfaceHolder = getHolder();
         paint = new Paint();
         paint.setAntiAlias(true);
+
         random = new Random();
         obstacles = new ArrayList<>();
-        
-        // Farben initialisieren
+
         colorBackground = ContextCompat.getColor(context, R.color.moveon_background);
         colorObstacle = ContextCompat.getColor(context, R.color.obstacle_color);
-        
+
         initializeHeartPath(baseHeartSize);
     }
 
@@ -63,18 +76,13 @@ public class GameView extends SurfaceView implements Runnable {
         float offset = size * 2;
         heartPath.moveTo(0, size / 4 - offset);
         heartPath.cubicTo(0, -size / 2 - offset, -size, -size / 2 - offset, -size, size / 2 - offset);
-        heartPath.cubicTo(-size, size - offset, 0, size * 1.5f - offset, 0, size * 2 - offset); 
+        heartPath.cubicTo(-size, size - offset, 0, size * 1.5f - offset, 0, size * 2 - offset);
         heartPath.cubicTo(0, size * 1.5f - offset, size, size - offset, size, size / 2 - offset);
         heartPath.cubicTo(size, -size / 2 - offset, 0, -size / 2 - offset, 0, size / 4 - offset);
     }
 
     public void setROM(int rom) {
         this.currentROM = rom;
-    }
-
-    public void updateDifficulty(float factor) {
-        this.gameSpeed = 15f + (factor * 20f);
-        this.heartScale = 1.0f - (factor * 0.6f);
     }
 
     public void setGameStarted(boolean started) {
@@ -88,26 +96,58 @@ public class GameView extends SurfaceView implements Runnable {
     public void run() {
         while (isPlaying) {
             update();
-            draw();
+            drawFrame();
             sleep();
         }
     }
 
+    // ===== Herzgröße + Speed aus Slider-Faktor (0..1) =====
+    private void applyThumbFactor(float factor) {
+        if (factor < 0f) factor = 0f;
+        if (factor > 1f) factor = 1f;
+
+        // Poti hoch -> Herz kleiner
+        float maxScale = 1.0f;   // groß
+        float minScale = 0.40f;  // klein
+        heartScale = maxScale - factor * (maxScale - minScale);
+
+        // Poti hoch -> schneller
+        float minSpeed = 8f;     // langsam
+        float maxSpeed = 35f;    // schnell
+        gameSpeed = minSpeed + factor * (maxSpeed - minSpeed);
+    }
+
     private void update() {
-        float scaledHeight = baseHeartSize * 2 * heartScale;
-        float minY = scaledHeight; 
-        float maxY = screenY;      
+        // 1) Poti smooth nachführen (stetige Änderung)
+        float smoothAlpha = 0.15f; // 0.10..0.25 je nach gewünschter Trägheit
+        thumbSliderSmooth += (thumbSliderTarget - thumbSliderSmooth) * smoothAlpha;
+
+        // 2) Aus dem geglätteten Wert Scale + Speed berechnen
+        applyThumbFactor(thumbSliderSmooth);
+
+        // 3) Herzbewegung: Winkel 0..90 steuert volle Range (unabhängig vom ROM)
+        float scaledHeight = baseHeartSize * 2f * heartScale;
+
+        float minY = scaledHeight; // oben nicht abschneiden
+        float maxY = screenY;
         float range = maxY - minY;
-        
-        float targetY = maxY - (armAngle / 90f * range);
-        
+
+        float a = armAngle;
+        if (a < 0f) a = 0f;
+        if (a > 90f) a = 90f;
+
+        // Winkel größer -> Herz nach oben
+        float targetY = maxY - (a / 90f) * range;
+
         if (targetY < minY) targetY = minY;
         if (targetY > maxY) targetY = maxY;
 
-        heartY += (targetY - heartY) * 0.1f;
+        // Smooth movement für Herzposition
+        heartY += (targetY - heartY) * 0.10f;
 
         if (!isGameStarted) return;
 
+        // 4) Hindernisse: ROM beeinflusst nur deren Platzierung (Spawn-Bereich)
         if (obstaclesSpawned < MAX_OBSTACLES) {
             if (obstacles.isEmpty() || obstacles.get(obstacles.size() - 1).x < screenX - (500 + gameSpeed * 10)) {
                 obstacles.add(new Obstacle(screenX, screenY, currentROM, scaledHeight));
@@ -147,21 +187,23 @@ public class GameView extends SurfaceView implements Runnable {
         }
     }
 
-    private void draw() {
-        if (surfaceHolder.getSurface().isValid()) {
-            Canvas canvas = surfaceHolder.lockCanvas();
-            if (canvas == null) return;
-            
-            canvas.drawColor(colorBackground);
-            drawHeart(canvas, screenX / 4f, heartY);
-            
-            paint.setColor(colorObstacle);
-            for (Obstacle o : obstacles) {
-                canvas.drawRect(o.x, 0, o.x + o.width, o.gapY, paint);
-                canvas.drawRect(o.x, o.gapY + o.gapSize, o.x + o.width, screenY, paint);
-            }
-            surfaceHolder.unlockCanvasAndPost(canvas);
+    private void drawFrame() {
+        if (!surfaceHolder.getSurface().isValid()) return;
+
+        Canvas canvas = surfaceHolder.lockCanvas();
+        if (canvas == null) return;
+
+        canvas.drawColor(colorBackground);
+
+        drawHeart(canvas, screenX / 4f, heartY);
+
+        paint.setColor(colorObstacle);
+        for (Obstacle o : obstacles) {
+            canvas.drawRect(o.x, 0, o.x + o.width, o.gapY, paint);
+            canvas.drawRect(o.x, o.gapY + o.gapSize, o.x + o.width, screenY, paint);
         }
+
+        surfaceHolder.unlockCanvasAndPost(canvas);
     }
 
     private void drawHeart(Canvas canvas, float x, float y) {
@@ -175,7 +217,7 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void sleep() {
         try {
-            Thread.sleep(17);
+            Thread.sleep(17); // ~60 FPS
         } catch (InterruptedException e) {
             Log.e(TAG, "Interrupted in sleep", e);
         }
@@ -190,7 +232,7 @@ public class GameView extends SurfaceView implements Runnable {
     public void pause() {
         isPlaying = false;
         try {
-            gameThread.join();
+            if (gameThread != null) gameThread.join();
         } catch (InterruptedException e) {
             Log.e(TAG, "Error joining thread", e);
         }
@@ -201,22 +243,37 @@ public class GameView extends SurfaceView implements Runnable {
         super.onSizeChanged(w, h, oldw, oldh);
         screenX = w;
         screenY = h;
-        heartY = h; 
+        heartY = h;
     }
 
+    // Winkel kommt vom Arduino (0..90)
     public void setArmAngle(float angle) {
+        if (angle < 0f) angle = 0f;
+        if (angle > 90f) angle = 90f;
         this.armAngle = angle;
+    }
+
+    // Slider 0..1 (aus potiRaw/330f in GameActivity!)
+    public void setThumbSlider(float slider01) {
+        if (slider01 < 0f) slider01 = 0f;
+        if (slider01 > 1f) slider01 = 1f;
+        this.thumbSliderTarget = slider01;
     }
 
     private void resetGame() {
         score = 0;
         obstaclesSpawned = 0;
+
         if (onScoreChangeListener != null) {
             onScoreChangeListener.onScoreChanged(score);
         }
+
         obstacles.clear();
-        heartY = screenY; 
-        armAngle = 0;
+        heartY = screenY;
+        armAngle = 0f;
+
+        // optional: beim Neustart nicht hart resetten, damit es smooth bleibt:
+        // thumbSliderSmooth = thumbSliderTarget;
     }
 
     private class Obstacle {
@@ -226,18 +283,25 @@ public class GameView extends SurfaceView implements Runnable {
 
         Obstacle(int screenX, int screenY, int rom, float heartHeight) {
             this.x = screenX;
-            float maxY = screenY; 
+
+            float maxY = screenY;
+
+            // ROM beeinflusst nur, wie hoch Hindernisse liegen dürfen
             float minY_at_ROM = screenY - (rom / 90f * (screenY - heartHeight));
+
             float targetHeartTipY = minY_at_ROM + random.nextFloat() * (maxY - minY_at_ROM);
             float heartCenterY = targetHeartTipY - (heartHeight / 2f);
+
             this.gapY = heartCenterY - (gapSize / 2f);
+
             if (gapY < 0) gapY = 0;
             if (gapY + gapSize > screenY) gapY = screenY - gapSize;
         }
 
         boolean collides(float hX, float hY, float scale) {
-            float scaledHeight = baseHeartSize * 2 * scale;
-            float hitBoxWidth = baseHeartSize * scale; 
+            float scaledHeight = baseHeartSize * 2f * scale;
+            float hitBoxWidth = baseHeartSize * scale;
+
             if (hX + hitBoxWidth > x && hX - hitBoxWidth < x + width) {
                 if (hY - scaledHeight < gapY) return true;
                 if (hY > gapY + gapSize) return true;
