@@ -1,13 +1,10 @@
-
 plugins {
     alias(libs.plugins.android.application)
 }
 
 android {
     namespace = "com.examplehjhk.moveon"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.examplehjhk.moveon"
@@ -15,7 +12,6 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -28,28 +24,43 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    // ✅ Fix für Netty Duplicate META-INF Dateien (HiveMQ / Netty)
+    packaging {
+        resources {
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/io.netty.versions.properties"
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/io.netty.versions.properties"
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/LICENSE*"
+            excludes += "META-INF/NOTICE*"
+        }
+    }
 }
 
-configurations.all {
-    exclude(group = "com.google.guava", module = "listenablefuture")
-}
 
 dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    implementation(libs.compiler)
+    // ❌ raus: implementation(libs.compiler)
 
-    // Room Database
+    // ✅ Room Database (Java korrekt)
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
+    annotationProcessor("androidx.room:room-compiler:$roomVersion")
+    // room-ktx ist optional (eher für Kotlin). Du kannst es drin lassen oder rausnehmen:
+    // implementation("androidx.room:room-ktx:$roomVersion")
 
+    // ✅ MQTT (HiveMQ)
+    implementation("com.hivemq:hivemq-mqtt-client:1.3.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

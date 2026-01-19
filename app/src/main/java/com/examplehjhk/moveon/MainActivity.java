@@ -29,17 +29,26 @@ public class MainActivity extends AppCompatActivity {
 
         currentUser = (User) getIntent().getSerializableExtra("user");
 
+        // Optional: falls MainActivity mal ohne User gestartet wird
+        if (currentUser == null) {
+            startActivity(new Intent(this, Login.class));
+            finish();
+            return;
+        }
+
         // Dark Mode laden
         SharedPreferences settingsPrefs = getSharedPreferences("settings", MODE_PRIVATE);
         boolean isDarkMode = settingsPrefs.getBoolean("dark_mode", false);
-        AppCompatDelegate.setDefaultNightMode(isDarkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+        AppCompatDelegate.setDefaultNightMode(isDarkMode
+                ? AppCompatDelegate.MODE_NIGHT_YES
+                : AppCompatDelegate.MODE_NIGHT_NO);
 
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom); // Top padding 0 for fixed header
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom);
             return insets;
         });
 
@@ -71,11 +80,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void scrollToCurrentLevel() {
-        // Hier könnte man später das gespeicherte Level abfragen
-        levelScrollView.post(() -> {
-            // Scrollt zum Anfang (Level 1)
-            levelScrollView.fullScroll(ScrollView.FOCUS_UP);
-        });
+        levelScrollView.post(() -> levelScrollView.fullScroll(ScrollView.FOCUS_UP));
     }
 
     private void checkAndRefreshStreak() {
@@ -105,12 +110,13 @@ public class MainActivity extends AppCompatActivity {
         long lastPlayedMillis = prefs.getLong("last_played_date", 0);
 
         Calendar today = getStartOfDay(Calendar.getInstance());
-        
+
         if (lastPlayedMillis == 0) {
             currentStreak = 1;
         } else {
             Calendar lastPlayed = getStartOfDay(Calendar.getInstance());
             lastPlayed.setTimeInMillis(lastPlayedMillis);
+
             long diff = today.getTimeInMillis() - lastPlayed.getTimeInMillis();
             long daysDiff = diff / (24 * 60 * 60 * 1000);
 
@@ -122,10 +128,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         prefs.edit()
-            .putInt("streak_count", currentStreak)
-            .putLong("last_played_date", System.currentTimeMillis())
-            .apply();
-        
+                .putInt("streak_count", currentStreak)
+                .putLong("last_played_date", System.currentTimeMillis())
+                .apply();
+
         streakCountText.setText(String.valueOf(currentStreak));
     }
 
