@@ -34,6 +34,8 @@ public class GameActivity extends AppCompatActivity {
     private int romIncreaseValue = 5;
     private String supportString = "10%";
 
+    private User currentUser;
+
     // ===== MQTT =====
     private SimpleMqttClient client;
     private static final String MQTT_BROKER = "broker.hivemq.com";
@@ -58,8 +60,12 @@ public class GameActivity extends AppCompatActivity {
         String increaseString = prefs.getString("rom_increase", "5°");
         supportString = prefs.getString("support", "10%");
 
+
         // Level
         currentLevel = getIntent().getIntExtra("nextLevel", 1);
+        currentUser = (User) getIntent().getSerializableExtra("user");
+
+        // ROM
 
         try {
             currentROMValue = Integer.parseInt(romString.replace("°", "").trim());
@@ -95,6 +101,7 @@ public class GameActivity extends AppCompatActivity {
             intent.putExtra("support", supportString);
             intent.putExtra("level", currentLevel);
             intent.putExtra("success", success);
+            intent.putExtra("user", currentUser);
             startActivity(intent);
             finish();
         }));

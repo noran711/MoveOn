@@ -27,6 +27,7 @@ public class FeedbackActivity extends AppCompatActivity {
         Button btnBackHome = findViewById(R.id.btnBackHome);
 
         // Receive data
+        User currentUser = (User) getIntent().getSerializableExtra("user");
         int score = getIntent().getIntExtra("score", 0);
         String rom = getIntent().getStringExtra("rom");
         String support = getIntent().getStringExtra("support");
@@ -51,6 +52,8 @@ public class FeedbackActivity extends AppCompatActivity {
 
         btnRestart.setOnClickListener(v -> {
             Intent intent = new Intent(FeedbackActivity.this, GameActivity.class);
+            intent.putExtra("user", currentUser);
+
             // If successful, go to next level, otherwise repeat same level
             if (success && score >= 30) {
                 intent.putExtra("nextLevel", level + 1);
@@ -63,7 +66,8 @@ public class FeedbackActivity extends AppCompatActivity {
 
         btnBackHome.setOnClickListener(v -> {
             Intent intent = new Intent(FeedbackActivity.this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra("user", currentUser);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
             finish();
         });

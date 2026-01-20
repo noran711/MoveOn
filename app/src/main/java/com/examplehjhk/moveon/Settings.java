@@ -31,11 +31,14 @@ public class Settings extends AppCompatActivity {
     private SwitchMaterial switchDarkMode;
     private CheckBox chkNotifications;
     private SharedPreferences sharedPreferences;
+    private User currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        currentUser = (User) getIntent().getSerializableExtra("user");
+
 
         // UI-Elemente initialisieren
         lblFullName = findViewById(R.id.lblFullName);
@@ -98,6 +101,7 @@ public class Settings extends AppCompatActivity {
         ImageView homeButton = findViewById(R.id.btnHome);
         homeButton.setOnClickListener(v -> {
             Intent intent = new Intent(Settings.this, MainActivity.class);
+            intent.putExtra("user", currentUser);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();
@@ -105,19 +109,18 @@ public class Settings extends AppCompatActivity {
     }
 
     private void loadSettings() {
-        User user = (User) getIntent().getSerializableExtra("user");
 
-        if (user != null) {
-            lblFullName.setText(user.firstName + " " + user.lastName);
-            usernameValue.setText(user.username);
-            if ("Male".equalsIgnoreCase(user.gender)) {
+        if (currentUser != null) {
+            lblFullName.setText(currentUser.firstName + " " + currentUser.lastName);
+            usernameValue.setText(currentUser.username);
+            if ("Male".equalsIgnoreCase(currentUser.gender)) {
                 if (btnradioMale != null) btnradioMale.setChecked(true);
             } else {
                 if (btnradioFemale != null) btnradioFemale.setChecked(true);
             }
-            if ("Patient".equalsIgnoreCase(user.role)) {
+            if ("Patient".equalsIgnoreCase(currentUser.role)) {
                 if (btnradioPatient != null) btnradioPatient.setChecked(true);
-            } else if ("Therapeut".equalsIgnoreCase(user.role)) {
+            } else if ("Therapeut".equalsIgnoreCase(currentUser.role)) {
                 if (btnradioTherapist != null) btnradioTherapist.setChecked(true);
             }
         } else {
