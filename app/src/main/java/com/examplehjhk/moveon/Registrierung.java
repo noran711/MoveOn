@@ -6,6 +6,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.examplehjhk.moveon.auth.AuthManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.datepicker.CalendarConstraints;
@@ -27,7 +28,7 @@ public class Registrierung extends AppCompatActivity {
     private MaterialButtonToggleGroup toggleGender, toggleRole;
     private MaterialButton buttonRegister;
 
-    private DBHelper dbHelper;
+    private AuthManager authManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +39,7 @@ public class Registrierung extends AppCompatActivity {
             getSupportActionBar().hide();
         }
 
-        dbHelper = new DBHelper(this);
+        authManager = new AuthManager(this);
 
         // Inputs
         editFirstName        = findViewById(R.id.editFirstName);
@@ -72,46 +73,25 @@ public class Registrierung extends AppCompatActivity {
         String password  = getValue(editPasswordRegister);
         String confirm   = getValue(editPasswordConfirm);
 
-        if (firstName.isEmpty() || lastName.isEmpty() || birthDate.isEmpty()
-                || phone.isEmpty() || username.isEmpty()
-                || password.isEmpty() || confirm.isEmpty()) {
-
-            Toast.makeText(this, "Bitte alle Felder ausfüllen.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (!password.equals(confirm)) {
-            Toast.makeText(this, "Passwörter stimmen nicht überein.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         boolean isFemale   = toggleGender.getCheckedButtonId() == R.id.btnFemale;
         boolean isPatient  = toggleRole.getCheckedButtonId()   == R.id.btnPatient;
 
-        String roleText   = isPatient ? "Patient" : "Therapeut";
-        String genderText = isFemale  ? "Female"  : "Male";
-
-        boolean ok = dbHelper.insertUser(
+        AuthManager.Result res = authManager.register(
                 firstName,
                 lastName,
                 birthDate,
                 phone,
                 username,
                 password,
-                genderText,
-                roleText
+                confirm,
+                isFemale,
+                isPatient
         );
 
-        if (!ok) {
-            Toast.makeText(this,
-                    "Fehler beim Speichern (evtl. Benutzername schon vergeben).",
-                    Toast.LENGTH_LONG).show();
-            return;
-        }
+        Toast.makeText(this, res.message,
+                res.ok ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show();
 
-        Toast.makeText(this,
-                roleText + " (" + genderText + ") erfolgreich registriert.",
-                Toast.LENGTH_SHORT).show();
+        if (!res.ok) return;
 
         startActivity(new Intent(Registrierung.this, Login.class));
         finish();

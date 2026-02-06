@@ -1,54 +1,21 @@
 package com.examplehjhk.moveon.domain;
 
-public class Bird {
+import java.io.Serializable;
 
-    private float x;
-    private float y;
-    private float velocity;
-    private float size;
+public class Bird implements Serializable {
+    public float x;
+    public float y;
 
-    public void updatePosition() {
-        // Logic to update bird's position
+    public float scale = 1.0f;
+    public float baseSize = 60f;
+
+    public Bird() {}
+
+    public float getScaledHeight() {
+        return baseSize * 2f * scale;
     }
 
-    public void resetPosition() {
-        // Logic to reset bird's position
-    }
-
-    public void resize() {
-        // Logic to resize the bird
-    }
-
-    // Standard Getters and Setters
-    public float getX() {
-        return x;
-    }
-
-    public void setX(float x) {
-        this.x = x;
-    }
-
-    public float getY() {
-        return y;
-    }
-
-    public void setY(float y) {
-        this.y = y;
-    }
-
-    public float getVelocity() {
-        return velocity;
-    }
-
-    public void setVelocity(float velocity) {
-        this.velocity = velocity;
-    }
-
-    public float getSize() {
-        return size;
-    }
-
-    public void setSize(float size) {
-        this.size = size;
+    public float getHitBoxWidth() {
+        return baseSize * scale;
     }
 }

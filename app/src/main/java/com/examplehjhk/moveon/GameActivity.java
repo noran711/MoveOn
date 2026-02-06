@@ -10,12 +10,14 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.examplehjhk.moveon.domain.Level;
+import com.examplehjhk.moveon.domain.User;
+import com.examplehjhk.moveon.hardware.SimpleMqttClient;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.UUID;
-
-import com.examplehjhk.moveon.SimpleMqttClient; // <-- ggf. anpassen!
 
 public class GameActivity extends AppCompatActivity {
 
@@ -36,11 +38,14 @@ public class GameActivity extends AppCompatActivity {
 
     private User currentUser;
 
+    // ✅ UML: Level
+    private Level activeLevel;
+
     // ===== MQTT =====
     private SimpleMqttClient client;
     private static final String MQTT_BROKER = "broker.hivemq.com";
     private static final int MQTT_PORT = 1883;
-    private static final String MQTT_TOPIC = "moveon/sensor"; // muss zu Python passen
+    private static final String MQTT_TOPIC = "moveon/sensor";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,13 +65,15 @@ public class GameActivity extends AppCompatActivity {
         String increaseString = prefs.getString("rom_increase", "5°");
         supportString = prefs.getString("support", "10%");
 
-
-        // Level
+        // Level + User
         currentLevel = getIntent().getIntExtra("nextLevel", 1);
         currentUser = (User) getIntent().getSerializableExtra("user");
 
-        // ROM
+        // ✅ Level Objekt erstellen (Gameplay bleibt gleich: 30 Obstacles)
+        activeLevel = new Level(currentLevel);
+        activeLevel.setObstacleCount(30);
 
+        // ROM parsen
         try {
             currentROMValue = Integer.parseInt(romString.replace("°", "").trim());
             romIncreaseValue = Integer.parseInt(increaseString.replace("°", "").trim());
@@ -85,9 +92,13 @@ public class GameActivity extends AppCompatActivity {
         romInfoText.setText("ROM: " + currentROMValue + "°");
         supportInfoText.setText("Support: " + supportString);
         levelInfoText.setText("Level: " + currentLevel);
-        scoreText.setText("0 / 30");
 
+        // ✅ Score Anzeige dynamisch
+        scoreText.setText("0 / " + activeLevel.getObstacleCount());
+
+        // ✅ GameView konfigurieren
         gameView.setROM(currentROMValue);
+        gameView.setMaxObstacles(activeLevel.getObstacleCount());
 
         btnStart.setOnClickListener(v -> {
             btnStart.setVisibility(View.GONE);
@@ -108,10 +119,10 @@ public class GameActivity extends AppCompatActivity {
 
         gameView.setOnScoreChangeListener(score -> runOnUiThread(() -> {
             currentScore = score;
-            scoreText.setText(score + " / 30");
+            scoreText.setText(score + " / " + activeLevel.getObstacleCount());
         }));
 
-        // ===== MQTT Client erstellen =====
+        // MQTT Client erstellen
         client = new SimpleMqttClient(MQTT_BROKER, MQTT_PORT, UUID.randomUUID().toString());
     }
 
@@ -124,11 +135,8 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        // sauber trennen
         try {
-            if (client != null && client.isConnected()) {
-                client.disconnect();
-            }
+            if (client != null && client.isConnected()) client.disconnect();
         } catch (Exception ignored) {}
     }
 
@@ -157,8 +165,7 @@ public class GameActivity extends AppCompatActivity {
         client.subscribe(new SimpleMqttClient.MqttSubscription(this, MQTT_TOPIC) {
             @Override
             public void onMessage(String topic, String payload) {
-                // Erwartet von Python:
-                // {"user":"Test","t":"55.0;330"}
+                // Erwartet: {"user":"Test","t":"55.0;330"}
                 try {
                     JSONObject obj = new JSONObject(payload);
                     String t = obj.getString("t"); // "55.0;330"
@@ -170,16 +177,8 @@ public class GameActivity extends AppCompatActivity {
                     int potiRaw = Integer.parseInt(parts[1].trim());
 
                     runOnUiThread(() -> {
-                        // 1) Winkel -> Herz hoch/runter
                         gameView.setArmAngle(angle);
-
-                        // 2) Poti -> Herzgröße (und ggf Speed) über Rohwert
-                        // Falls du meine angepasste GameView mit setPotiRaw hast:
-                        gameView.setPotiRaw(potiRaw);
-
-                        // Wenn du setPotiRaw NICHT eingebaut hast, nimm stattdessen:
-                        // float slider = Math.max(0f, Math.min(1f, potiRaw / 330f));
-                        // gameView.updateDifficulty(slider);
+                        gameView.setPotiRaw(potiRaw); // -> ThumbSlider
                     });
 
                 } catch (JSONException | NumberFormatException e) {

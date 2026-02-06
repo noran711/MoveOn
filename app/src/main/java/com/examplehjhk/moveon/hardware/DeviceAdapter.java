@@ -3,41 +3,55 @@ package com.examplehjhk.moveon.hardware;
 import com.examplehjhk.moveon.domain.Attempt;
 import com.examplehjhk.moveon.domain.GameSession;
 import com.examplehjhk.moveon.domain.SensorSample;
+import com.examplehjhk.moveon.GameView;
 
 public class DeviceAdapter implements DeviceListener {
 
-    private Attempt activeAttempt;
-    private GameSession activeSession;
+    private final GameView gameView;
 
-    @Override
-    public void onAngleChanged(float angle) {
-        // Logic to create a SensorSample and add it to the active Attempt
+    // UML: activeAttempt/activeSession
+    private GameSession activeSession;
+    private Attempt activeAttempt;
+
+    // Wir merken uns den letzten Sliderwert, damit wir beim Angle-Sample alles haben
+    private int lastPotiRaw = 0;
+
+    public DeviceAdapter(GameView gameView) {
+        this.gameView = gameView;
+    }
+
+    public void setActiveSession(GameSession session, Attempt attempt) {
+        this.activeSession = session;
+        this.activeAttempt = attempt;
     }
 
     @Override
-    public void onSliderChanged(float value) {
-        // Logic to handle slider changes
+    public void onAngleChanged(float angle) {
+        if (gameView != null) gameView.setArmAngle(angle);
+
+        // Logging (UML SensorSample)
+        if (activeAttempt != null) {
+            float bx = (gameView != null) ? gameView.getBirdX() : 0f;
+            float by = (gameView != null) ? gameView.getBirdY() : 0f;
+
+            activeAttempt.addSample(new SensorSample(
+                    System.currentTimeMillis(),
+                    angle,
+                    lastPotiRaw,
+                    bx,
+                    by
+            ));
+        }
+    }
+
+    @Override
+    public void onSliderChanged(int potiRaw) {
+        lastPotiRaw = potiRaw;
+        if (gameView != null) gameView.setPotiRaw(potiRaw);
     }
 
     @Override
     public void onDisconnected() {
-        // Logic to handle device disconnection
-    }
-
-    // Standard Getters and Setters
-    public Attempt getActiveAttempt() {
-        return activeAttempt;
-    }
-
-    public void setActiveAttempt(Attempt activeAttempt) {
-        this.activeAttempt = activeAttempt;
-    }
-
-    public GameSession getActiveSession() {
-        return activeSession;
-    }
-
-    public void setActiveSession(GameSession activeSession) {
-        this.activeSession = activeSession;
+        // optional
     }
 }

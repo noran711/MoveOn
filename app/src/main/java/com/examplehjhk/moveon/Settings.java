@@ -14,6 +14,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+
+import com.examplehjhk.moveon.domain.User;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 public class Settings extends AppCompatActivity {

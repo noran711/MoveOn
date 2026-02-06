@@ -1,35 +1,35 @@
 package com.examplehjhk.moveon.domain;
 
-public abstract class User {
+import java.io.Serializable;
 
-    private String id;
-    private String username;
-    private String password;
+public class User implements Serializable {
+    public int id;
 
-    public abstract void updatePassword(String newPassword);
+    // Login / UML
+    public String username;
+    public String password;
 
-    // Standard Getters and Setters
-    public String getId() {
-        return id;
-    }
+    // Daten, die deine App aktuell benutzt
+    public String firstName;
+    public String lastName;
+    public String birthDate;
+    public String phone;
+    public String gender;   // "Female" / "Male"
+    public String role;     // "Patient" / "Therapeut"
 
-    public void setId(String id) {
+    public User() {}
+
+    public User(int id, String username, String password) {
         this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
         this.password = password;
     }
+
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
+    }
+
+    public String getUsername() { return username; }
+    public String getFirstName() { return firstName; }
+    public String getLastName()  { return lastName; }
 }

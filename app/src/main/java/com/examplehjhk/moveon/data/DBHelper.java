@@ -1,4 +1,4 @@
-package com.examplehjhk.moveon;
+package com.examplehjhk.moveon.data;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

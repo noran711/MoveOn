@@ -1,40 +1,25 @@
 package com.examplehjhk.moveon.domain;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
-public class Attempt {
+public class Attempt implements Serializable {
+    public int attemptNumber;
+    public boolean success;
+    public final List<SensorSample> sensorSamples = new ArrayList<>();
 
-    private int attemptNumber;
-    private List<SensorSample> sensorSamples;
-    private boolean success;
-
-    public float getErrorAngle() {
-        // Logic to get the error angle
-        return 0.0f;
-    }
-
-    // Standard Getters and Setters
-    public int getAttemptNumber() {
-        return attemptNumber;
-    }
-
-    public void setAttemptNumber(int attemptNumber) {
+    public Attempt(int attemptNumber) {
         this.attemptNumber = attemptNumber;
     }
 
-    public List<SensorSample> getSensorSamples() {
-        return sensorSamples;
+    public void addSample(SensorSample s) {
+        sensorSamples.add(s);
     }
 
-    public void setSensorSamples(List<SensorSample> sensorSamples) {
-        this.sensorSamples = sensorSamples;
-    }
-
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public void setSuccess(boolean success) {
-        this.success = success;
+    // UML hat sowas wie getErrorAngle() – minimal:
+    public float getErrorAngle() {
+        // solange du keine Sollbahn hast: 0 als Platzhalter (UML-konform vorhanden)
+        return 0f;
     }
 }

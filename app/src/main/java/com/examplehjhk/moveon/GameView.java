@@ -12,6 +12,10 @@ import android.view.SurfaceView;
 
 import androidx.core.content.ContextCompat;
 
+import com.examplehjhk.moveon.domain.Bird;
+import com.examplehjhk.moveon.domain.Obstacle;
+import com.examplehjhk.moveon.hardware.ThumbSlider;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -29,92 +33,93 @@ public class GameView extends SurfaceView implements Runnable {
 
     private int screenX, screenY;
 
-    private float heartY;
+    // ===== DOMAIN =====
+    private final Bird bird = new Bird();
+    private final List<Obstacle> obstacles = new ArrayList<>();
 
-    // ✅ Winkel kommt als 0..90 (MQTT/Arduino)
-    private volatile float armAngle = 0f;
+    // ===== HARDWARE =====
+    private final ThumbSlider thumbSlider = new ThumbSlider();
 
-    // ✅ Linear-Poti Rohwert (bei dir 0..330)
-    private static final float POTI_MAX = 330f;
-    private volatile int potiRaw = 0;
+    // ===== INPUT =====
+    private volatile float armAngle = 0f;   // 0..90
+    private static final int POTI_MAX = 330;
 
-    // ✅ Smooth-Faktor für Poti (damit Größe/Speed stetig ändern)
-    private float thumbTarget = 0f;  // 0..1
-    private float thumbSmooth = 0f;  // 0..1
-
-    private final List<Obstacle> obstacles;
+    // ===== GAME =====
     private int score = 0;
     private int obstaclesSpawned = 0;
-    private final int MAX_OBSTACLES = 30;
-    private final Random random;
-    private final Path heartPath = new Path();
 
-    // ✅ Diese Werte werden vom Poti beeinflusst
+    // ✅ Level steuert Hindernisanzahl
+    private int maxObstacles = 30;
+
     private float gameSpeed = 15f;
-    private float heartScale = 1.0f;
-
-    private final float baseHeartSize = 60f;
-
     private int currentROM = 90;
 
-    // Farben aus Ressourcen
+    private final Random random = new Random();
+    private final Path heartPath = new Path();
+
     private int colorBackground;
     private int colorObstacle;
 
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
         surfaceHolder = getHolder();
-        paint = new Paint();
-        paint.setAntiAlias(true);
-
-        random = new Random();
-        obstacles = new ArrayList<>();
+        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
         colorBackground = ContextCompat.getColor(context, R.color.moveon_background);
         colorObstacle = ContextCompat.getColor(context, R.color.obstacle_color);
 
-        initializeHeartPath(baseHeartSize);
+        bird.baseSize = 60f;
+        bird.scale = 1.0f;
+
+        initializeHeartPath(bird.baseSize);
     }
 
     private void initializeHeartPath(float size) {
         heartPath.reset();
-        float offset = size * 2;
-        heartPath.moveTo(0, size / 4 - offset);
-        heartPath.cubicTo(0, -size / 2 - offset, -size, -size / 2 - offset, -size, size / 2 - offset);
-        heartPath.cubicTo(-size, size - offset, 0, size * 1.5f - offset, 0, size * 2 - offset);
-        heartPath.cubicTo(0, size * 1.5f - offset, size, size - offset, size, size / 2 - offset);
-        heartPath.cubicTo(size, -size / 2 - offset, 0, -size / 2 - offset, 0, size / 4 - offset);
+        float o = size * 2;
+        heartPath.moveTo(0, size / 4 - o);
+        heartPath.cubicTo(0, -size / 2 - o, -size, -size / 2 - o, -size, size / 2 - o);
+        heartPath.cubicTo(-size, size - o, 0, size * 1.5f - o, 0, size * 2 - o);
+        heartPath.cubicTo(0, size * 1.5f - o, size, size - o, size, size / 2 - o);
+        heartPath.cubicTo(size, -size / 2 - o, 0, -size / 2 - o, 0, size / 4 - o);
     }
+
+    // ===== API von außen =====
 
     public void setROM(int rom) {
         this.currentROM = rom;
     }
 
     public void setGameStarted(boolean started) {
-        this.isGameStarted = started;
+        isGameStarted = started;
         if (started) resetGame();
     }
 
-    // ✅ Wird von außen gesetzt (MQTT): 0..90
     public void setArmAngle(float angle) {
-        if (angle < 0f) angle = 0f;
-        if (angle > 90f) angle = 90f;
-        this.armAngle = angle;
+        armAngle = Math.max(0f, Math.min(90f, angle));
     }
 
-    // ✅ NEU: Poti Rohwert setzen (0..330)
+    /** MQTT / Hardware → Rohwert */
     public void setPotiRaw(int raw) {
-        if (raw < 0) raw = 0;
-        if (raw > (int) POTI_MAX) raw = (int) POTI_MAX;
-        this.potiRaw = raw;
+        thumbSlider.setFromRaw(raw, POTI_MAX);
     }
 
-    // Optional: wenn du lieber direkt 0..1 setzen willst
-    public void setThumbSlider(float slider01) {
-        if (slider01 < 0f) slider01 = 0f;
-        if (slider01 > 1f) slider01 = 1f;
-        this.thumbTarget = slider01;
+    /** Optional: UI-Slider 0..1 */
+    public void setThumbSlider01(float value01) {
+        thumbSlider.setValue01(value01);
     }
+
+    /** ✅ Level → Anzahl Hindernisse */
+    public void setMaxObstacles(int count) {
+        if (count < 1) count = 1;
+        this.maxObstacles = count;
+    }
+
+    // Für Logging/Session
+    public float getBirdX() { return bird.x; }
+    public float getBirdY() { return bird.y; }
+
+    // ===== GAME LOOP =====
 
     @Override
     public void run() {
@@ -126,75 +131,58 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void update() {
-        // ========= Poti -> Ziel (0..1) =========
-        // Wenn du setPotiRaw nutzt:
-        float target = potiRaw / POTI_MAX;
-        if (target < 0f) target = 0f;
-        if (target > 1f) target = 1f;
-        thumbTarget = target;
+        // ===== ThumbSlider steuert Größe + Speed =====
+        float s = thumbSlider.getValue01(); // 0..1
 
-        // ========= Smooth =========
-        float smoothAlpha = 0.15f; // 0.1..0.25 je nachdem wie träge es sein soll
-        thumbSmooth += (thumbTarget - thumbSmooth) * smoothAlpha;
+        float maxScale = 1.0f;
+        float minScale = 0.40f;
+        bird.scale = maxScale - s * (maxScale - minScale);
 
-        // ========= Poti (thumbSmooth) steuert Größe + Geschwindigkeit =========
-        // Poti hoch -> Herz klein und Speed hoch
-        float maxScale = 1.0f;   // groß
-        float minScale = 0.40f;  // klein
-        heartScale = maxScale - thumbSmooth * (maxScale - minScale);
+        float minSpeed = 8f;
+        float maxSpeed = 35f;
+        gameSpeed = minSpeed + s * (maxSpeed - minSpeed);
 
-        float minSpeed = 8f;     // langsam
-        float maxSpeed = 35f;    // schnell
-        gameSpeed = minSpeed + thumbSmooth * (maxSpeed - minSpeed);
-
-        // ========= Winkel -> Herz Y =========
-        float scaledHeight = baseHeartSize * 2f * heartScale;
-        float minY = scaledHeight;
+        // ===== Winkel → Bird.y =====
+        float h = bird.getScaledHeight();
+        float minY = h;
         float maxY = screenY;
-        float range = maxY - minY;
 
-        float a = armAngle; // 0..90
-        float targetY = maxY - (a / 90f) * range;
-
-        if (targetY < minY) targetY = minY;
-        if (targetY > maxY) targetY = maxY;
-
-        // Smooth für Bewegung
-        heartY += (targetY - heartY) * 0.10f;
+        float targetY = maxY - (armAngle / 90f) * (maxY - minY);
+        bird.y += (targetY - bird.y) * 0.10f;
 
         if (!isGameStarted) return;
 
-        // ========= Obstacles spawnen (ROM beeinflusst nur Obstacles) =========
-        if (obstaclesSpawned < MAX_OBSTACLES) {
-            if (obstacles.isEmpty() || obstacles.get(obstacles.size() - 1).x < screenX - (500 + gameSpeed * 10)) {
-                obstacles.add(new Obstacle(screenX, screenY, currentROM, scaledHeight));
+        // ===== Obstacles spawnen =====
+        if (obstaclesSpawned < maxObstacles) {
+            if (obstacles.isEmpty() || obstacles.get(obstacles.size() - 1).x < screenX - 500) {
+                obstacles.add(new Obstacle(screenX, screenY, currentROM, h, random));
                 obstaclesSpawned++;
             }
         } else if (obstacles.isEmpty()) {
+            // Level geschafft
             isGameStarted = false;
             if (onGameOverListener != null) onGameOverListener.onGameOver(true);
         }
 
-        // ========= Obstacles bewegen / Kollision / Score =========
+        // ===== Obstacles bewegen / Collision / Score =====
         for (int i = 0; i < obstacles.size(); i++) {
             Obstacle o = obstacles.get(i);
             o.x -= gameSpeed;
 
-            if (o.collides(screenX / 4f, heartY, heartScale)) {
+            if (o.collides(bird)) {
                 isGameStarted = false;
                 if (onGameOverListener != null) onGameOverListener.onGameOver(false);
                 break;
             }
 
-            if (!o.passed && (o.x + o.width) < screenX / 4f) {
+            if (!o.passed && o.x + o.width < bird.x) {
                 o.passed = true;
                 score++;
                 if (onScoreChangeListener != null) onScoreChangeListener.onScoreChanged(score);
             }
 
             if (o.x + o.width < 0) {
-                obstacles.remove(i);
-                i--;
+                obstacles.remove(i--);
             }
         }
     }
@@ -202,36 +190,36 @@ public class GameView extends SurfaceView implements Runnable {
     private void drawFrame() {
         if (!surfaceHolder.getSurface().isValid()) return;
 
-        Canvas canvas = surfaceHolder.lockCanvas();
-        if (canvas == null) return;
+        Canvas c = surfaceHolder.lockCanvas();
+        if (c == null) return;
 
-        canvas.drawColor(colorBackground);
-        drawHeart(canvas, screenX / 4f, heartY);
+        c.drawColor(colorBackground);
 
+        // Bird (Herz)
+        drawHeart(c);
+
+        // Obstacles
         paint.setColor(colorObstacle);
         for (Obstacle o : obstacles) {
-            canvas.drawRect(o.x, 0, o.x + o.width, o.gapY, paint);
-            canvas.drawRect(o.x, o.gapY + o.gapSize, o.x + o.width, screenY, paint);
+            c.drawRect(o.x, 0, o.x + o.width, o.gapY, paint);
+            c.drawRect(o.x, o.gapY + o.gapSize, o.x + o.width, screenY, paint);
         }
 
-        surfaceHolder.unlockCanvasAndPost(canvas);
+        surfaceHolder.unlockCanvasAndPost(c);
     }
 
-    private void drawHeart(Canvas canvas, float x, float y) {
+    private void drawHeart(Canvas c) {
         paint.setColor(Color.RED);
-        canvas.save();
-        canvas.translate(x, y);
-        canvas.scale(heartScale, heartScale);
-        canvas.drawPath(heartPath, paint);
-        canvas.restore();
+        c.save();
+        c.translate(bird.x, bird.y);
+        c.scale(bird.scale, bird.scale);
+        c.drawPath(heartPath, paint);
+        c.restore();
     }
 
     private void sleep() {
-        try {
-            Thread.sleep(17);
-        } catch (InterruptedException e) {
-            Log.e(TAG, "Interrupted in sleep", e);
-        }
+        try { Thread.sleep(17); }
+        catch (InterruptedException e) { Log.e(TAG, "sleep", e); }
     }
 
     public void resume() {
@@ -244,67 +232,36 @@ public class GameView extends SurfaceView implements Runnable {
     public void pause() {
         isPlaying = false;
         try {
-            if (gameThread != null) {
-                gameThread.join();
-                gameThread = null;
-            }
-        } catch (InterruptedException e) {
-            Log.e(TAG, "Error joining thread", e);
-        }
+            if (gameThread != null) gameThread.join();
+        } catch (InterruptedException ignored) {}
+        gameThread = null;
     }
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
+    protected void onSizeChanged(int w, int h, int ow, int oh) {
+        super.onSizeChanged(w, h, ow, oh);
         screenX = w;
         screenY = h;
-        heartY = h;
+
+        bird.x = screenX / 4f;
+        bird.y = screenY;
     }
 
     private void resetGame() {
         score = 0;
         obstaclesSpawned = 0;
-        if (onScoreChangeListener != null) onScoreChangeListener.onScoreChanged(score);
-
         obstacles.clear();
-        heartY = screenY;
+
+        bird.x = screenX / 4f;
+        bird.y = screenY;
+
         armAngle = 0f;
-        potiRaw = 0;
-        thumbTarget = 0f;
-        // thumbSmooth lassen wir stehen oder setzen es gleich:
-        // thumbSmooth = thumbTarget;
+        thumbSlider.setValue01(0f);
+
+        if (onScoreChangeListener != null) onScoreChangeListener.onScoreChanged(score);
     }
 
-    private class Obstacle {
-        float x, width = 150;
-        float gapY, gapSize = 400;
-        boolean passed = false;
-
-        Obstacle(int screenX, int screenY, int rom, float heartHeight) {
-            this.x = screenX;
-
-            float maxY = screenY;
-            float minY_at_ROM = screenY - (rom / 90f * (screenY - heartHeight));
-
-            float targetHeartTipY = minY_at_ROM + random.nextFloat() * (maxY - minY_at_ROM);
-            float heartCenterY = targetHeartTipY - (heartHeight / 2f);
-
-            this.gapY = heartCenterY - (gapSize / 2f);
-            if (gapY < 0) gapY = 0;
-            if (gapY + gapSize > screenY) gapY = screenY - gapSize;
-        }
-
-        boolean collides(float hX, float hY, float scale) {
-            float scaledHeight = baseHeartSize * 2f * scale;
-            float hitBoxWidth = baseHeartSize * scale;
-            if (hX + hitBoxWidth > x && hX - hitBoxWidth < x + width) {
-                if (hY - scaledHeight < gapY) return true;
-                if (hY > gapY + gapSize) return true;
-            }
-            return false;
-        }
-    }
-
+    // ===== CALLBACKS =====
     public interface OnGameOverListener {
         void onGameOver(boolean success);
     }
@@ -316,11 +273,6 @@ public class GameView extends SurfaceView implements Runnable {
     private OnGameOverListener onGameOverListener;
     private OnScoreChangeListener onScoreChangeListener;
 
-    public void setOnGameOverListener(OnGameOverListener listener) {
-        this.onGameOverListener = listener;
-    }
-
-    public void setOnScoreChangeListener(OnScoreChangeListener listener) {
-        this.onScoreChangeListener = listener;
-    }
+    public void setOnGameOverListener(OnGameOverListener l) { onGameOverListener = l; }
+    public void setOnScoreChangeListener(OnScoreChangeListener l) { onScoreChangeListener = l; }
 }
