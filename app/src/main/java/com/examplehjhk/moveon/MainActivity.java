@@ -17,6 +17,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.examplehjhk.moveon.domain.User;
+
 import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {

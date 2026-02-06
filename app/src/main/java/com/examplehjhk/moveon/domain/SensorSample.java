@@ -1,53 +1,19 @@
 package com.examplehjhk.moveon.domain;
 
-import java.util.Date;
+import java.io.Serializable;
 
-public class SensorSample {
+public class SensorSample implements Serializable {
+    public long timestampMs;
+    public float armAngle;
+    public int sliderRaw;
+    public float birdX;
+    public float birdY;
 
-    private Date timestamp;
-    private float armAngle;
-    private float sliderValue;
-    private float birdX;
-    private float birdY;
-
-    // Standard Getters and Setters
-    public Date getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(Date timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public float getArmAngle() {
-        return armAngle;
-    }
-
-    public void setArmAngle(float armAngle) {
+    public SensorSample(long timestampMs, float armAngle, int sliderRaw, float birdX, float birdY) {
+        this.timestampMs = timestampMs;
         this.armAngle = armAngle;
-    }
-
-    public float getSliderValue() {
-        return sliderValue;
-    }
-
-    public void setSliderValue(float sliderValue) {
-        this.sliderValue = sliderValue;
-    }
-
-    public float getBirdX() {
-        return birdX;
-    }
-
-    public void setBirdX(float birdX) {
+        this.sliderRaw = sliderRaw;
         this.birdX = birdX;
-    }
-
-    public float getBirdY() {
-        return birdY;
-    }
-
-    public void setBirdY(float birdY) {
         this.birdY = birdY;
     }
 }

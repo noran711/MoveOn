@@ -1,112 +1,33 @@
 package com.examplehjhk.moveon.domain;
 
-import java.util.Date;
-import java.util.List;
+import java.io.Serializable;
+import java.util.UUID;
 
-public class GameSession {
+public class GameSession implements Serializable {
 
-    private String sessionId;
-    private String patientId;
-    private Date startTime;
-    private Date endTime;
-    private long duration;
-    private int level;
-    private int stage;
-    private int obstaclesCleared;
-    private List<Float> errorAngles;
-    private boolean success;
-    private List<Attempt> attempts;
+    public String sessionId = UUID.randomUUID().toString();
 
-    public void addAttempt(Attempt attempt) {
-        // Logic to add an attempt
+    // ✅ Zuordnung zum Patienten (Therapeut sieht alles)
+    public String patientUsername;
+
+    public long startTimeMs;
+    public long endTimeMs;
+    public int durationSec;
+
+    public int levelNumber;
+    public int obstaclesCleared;
+    public boolean success;
+
+    public void start(String patientUsername, int levelNumber) {
+        this.patientUsername = patientUsername;
+        this.levelNumber = levelNumber;
+        this.startTimeMs = System.currentTimeMillis();
     }
 
-    // Standard Getters and Setters
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
-    }
-
-    public String getPatientId() {
-        return patientId;
-    }
-
-    public void setPatientId(String patientId) {
-        this.patientId = patientId;
-    }
-
-    public Date getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(Date startTime) {
-        this.startTime = startTime;
-    }
-
-    public Date getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(Date endTime) {
-        this.endTime = endTime;
-    }
-
-    public long getDuration() {
-        return duration;
-    }
-
-    public void setDuration(long duration) {
-        this.duration = duration;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
-    }
-
-    public int getStage() {
-        return stage;
-    }
-
-    public void setStage(int stage) {
-        this.stage = stage;
-    }
-
-    public int getObstaclesCleared() {
-        return obstaclesCleared;
-    }
-
-    public void setObstaclesCleared(int obstaclesCleared) {
-        this.obstaclesCleared = obstaclesCleared;
-    }
-
-    public List<Float> getErrorAngles() {
-        return errorAngles;
-    }
-
-    public void setErrorAngles(List<Float> errorAngles) {
-        this.errorAngles = errorAngles;
-    }
-
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public void setSuccess(boolean success) {
+    public void end(boolean success, int obstaclesCleared) {
         this.success = success;
-    }
-
-    public List<Attempt> getAttempts() {
-        return attempts;
-    }
-
-    public void setAttempts(List<Attempt> attempts) {
-        this.attempts = attempts;
+        this.obstaclesCleared = obstaclesCleared;
+        this.endTimeMs = System.currentTimeMillis();
+        this.durationSec = (int) ((endTimeMs - startTimeMs) / 1000);
     }
 }

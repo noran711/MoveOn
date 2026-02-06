@@ -2,42 +2,19 @@ package com.examplehjhk.moveon.hardware;
 
 public class ThumbSlider {
 
-    private float minValue;
-    private float maxValue;
-    private float currentValue;
+    private float value01 = 0f; // 0..1
 
-    public float calculateBirdSize() {
-        // Logic to calculate bird size based on slider value
-        return 0.0f;
+    public void setFromRaw(int raw, int maxRaw) {
+        if (maxRaw <= 0) maxRaw = 1;
+        float v = raw / (float) maxRaw;
+        value01 = Math.max(0f, Math.min(1f, v));
     }
 
-    public float calculateSpeedFactor() {
-        // Logic to calculate speed factor based on slider value
-        return 1.0f;
+    public void setValue01(float value01) {
+        this.value01 = Math.max(0f, Math.min(1f, value01));
     }
 
-    // Standard Getters and Setters
-    public float getMinValue() {
-        return minValue;
-    }
-
-    public void setMinValue(float minValue) {
-        this.minValue = minValue;
-    }
-
-    public float getMaxValue() {
-        return maxValue;
-    }
-
-    public void setMaxValue(float maxValue) {
-        this.maxValue = maxValue;
-    }
-
-    public float getCurrentValue() {
-        return currentValue;
-    }
-
-    public void setCurrentValue(float currentValue) {
-        this.currentValue = currentValue;
+    public float getValue01() {
+        return value01;
     }
 }

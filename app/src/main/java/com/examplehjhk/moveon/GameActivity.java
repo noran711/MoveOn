@@ -2,6 +2,7 @@ package com.examplehjhk.moveon;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -10,17 +11,20 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.examplehjhk.moveon.data.DBHelper;
+import com.examplehjhk.moveon.domain.User;
+import com.examplehjhk.moveon.hardware.SimpleMqttClient;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.UUID;
 
-import com.examplehjhk.moveon.SimpleMqttClient; // <-- ggf. anpassen!
-
 public class GameActivity extends AppCompatActivity {
 
-    private static final String TAG = "GameActivityMQTT";
+    private static final String TAG = "GameActivity";
 
+    // ===== UI =====
     private GameView gameView;
     private Button btnStart;
     private TextView scoreText;
@@ -28,25 +32,48 @@ public class GameActivity extends AppCompatActivity {
     private TextView supportInfoText;
     private TextView levelInfoText;
 
+    // ===== GAME STATE =====
     private int currentScore = 0;
     private int currentLevel = 1;
-    private int currentROMValue = 90;
+
+    // Basiswerte (werden aus SharedPrefs oder DB geladen)
+    private int currentROMValue = 30;
     private int romIncreaseValue = 5;
     private String supportString = "10%";
 
+    // Session timing
+    private long sessionStartMs;
+
     private User currentUser;
+    private DBHelper dbHelper;
 
     // ===== MQTT =====
-    private SimpleMqttClient client;
+    private SimpleMqttClient mqttClient;
     private static final String MQTT_BROKER = "broker.hivemq.com";
     private static final int MQTT_PORT = 1883;
-    private static final String MQTT_TOPIC = "moveon/sensor"; // muss zu Python passen
+    private static final String MQTT_TOPIC = "moveon/sensor";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
+        if (getSupportActionBar() != null) getSupportActionBar().hide();
+
+        // ===== INIT =====
+        dbHelper = new DBHelper(this);
+        sessionStartMs = System.currentTimeMillis();
+
+        currentUser = (User) getIntent().getSerializableExtra("user");
+        if (currentUser == null) {
+            startActivity(new Intent(this, Login.class));
+            finish();
+            return;
+        }
+
+        currentLevel = getIntent().getIntExtra("nextLevel", 1);
+
+        // ===== UI BINDING =====
         gameView = findViewById(R.id.gameView);
         btnStart = findViewById(R.id.btnStart);
         scoreText = findViewById(R.id.scoreText);
@@ -54,96 +81,175 @@ public class GameActivity extends AppCompatActivity {
         supportInfoText = findViewById(R.id.supportInfoText);
         levelInfoText = findViewById(R.id.levelInfoText);
 
-        // Load settings
-        SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
-        String romString = prefs.getString("rom", "30°");
-        String increaseString = prefs.getString("rom_increase", "5°");
-        supportString = prefs.getString("support", "10%");
-
-
-        // Level
-        currentLevel = getIntent().getIntExtra("nextLevel", 1);
-        currentUser = (User) getIntent().getSerializableExtra("user");
-
-        // ROM
-
-        try {
-            currentROMValue = Integer.parseInt(romString.replace("°", "").trim());
-            romIncreaseValue = Integer.parseInt(increaseString.replace("°", "").trim());
-        } catch (Exception e) {
-            currentROMValue = 30;
-            romIncreaseValue = 5;
-        }
-
-        // Apply ROM increase based on level
-        if (currentLevel > 1) {
-            currentROMValue += (currentLevel - 1) * romIncreaseValue;
-            if (currentROMValue > 90) currentROMValue = 90;
-        }
-
-        // Update UI
-        romInfoText.setText("ROM: " + currentROMValue + "°");
-        supportInfoText.setText("Support: " + supportString);
-        levelInfoText.setText("Level: " + currentLevel);
+        // Startwerte UI
         scoreText.setText("0 / 30");
 
-        gameView.setROM(currentROMValue);
+        // ===== SETTINGS LADEN + ANWENDEN =====
+        loadPatientSettings();
+        applySettingsToUIAndGame();
 
+        // ===== START BUTTON =====
         btnStart.setOnClickListener(v -> {
             btnStart.setVisibility(View.GONE);
             gameView.setGameStarted(true);
+
+            // Session Startzeit neu setzen, damit echte Spieldauer stimmt
+            sessionStartMs = System.currentTimeMillis();
         });
 
-        gameView.setOnGameOverListener(success -> runOnUiThread(() -> {
-            Intent intent = new Intent(GameActivity.this, FeedbackActivity.class);
-            intent.putExtra("score", currentScore);
-            intent.putExtra("rom", currentROMValue + "°");
-            intent.putExtra("support", supportString);
-            intent.putExtra("level", currentLevel);
-            intent.putExtra("success", success);
-            intent.putExtra("user", currentUser);
-            startActivity(intent);
-            finish();
-        }));
-
+        // ===== CALLBACKS =====
         gameView.setOnScoreChangeListener(score -> runOnUiThread(() -> {
             currentScore = score;
             scoreText.setText(score + " / 30");
         }));
 
-        // ===== MQTT Client erstellen =====
-        client = new SimpleMqttClient(MQTT_BROKER, MQTT_PORT, UUID.randomUUID().toString());
+        gameView.setOnGameOverListener(success -> runOnUiThread(() -> {
+            // ROM im Feedback soll dem *aktuellen* Stand entsprechen
+            int effectiveRomNow = calculateEffectiveRom();
+
+            saveSession(success);
+
+            Intent intent = new Intent(GameActivity.this, FeedbackActivity.class);
+            intent.putExtra("user", currentUser);
+            intent.putExtra("score", currentScore);
+            intent.putExtra("rom", effectiveRomNow + "°");
+            intent.putExtra("support", supportString);
+            intent.putExtra("level", currentLevel);
+            intent.putExtra("success", success);
+            startActivity(intent);
+            finish();
+        }));
+
+        // ===== MQTT INIT =====
+        mqttClient = new SimpleMqttClient(MQTT_BROKER, MQTT_PORT, UUID.randomUUID().toString());
+    }
+
+    // =====================================================
+    // SETTINGS LADEN (SharedPrefs + DB Override vom Therapeuten)
+    // =====================================================
+    private void loadPatientSettings() {
+
+        // 1) Defaults aus SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+        currentROMValue = parseIntSafe(prefs.getString("rom", "30°"), 30);
+        romIncreaseValue = parseIntSafe(prefs.getString("rom_increase", "5°"), 5);
+        supportString = prefs.getString("support", "10%");
+
+        // 2) DB Override: Werte, die der Therapeut gesetzt hat
+        Cursor s = dbHelper.getPatientSettings(currentUser.username);
+        if (s != null && s.moveToFirst()) {
+            currentROMValue = s.getInt(s.getColumnIndexOrThrow("rom"));
+            romIncreaseValue = s.getInt(s.getColumnIndexOrThrow("rom_increase"));
+
+            int supportPercent = s.getInt(s.getColumnIndexOrThrow("support_percent"));
+            supportString = supportPercent + "%";
+        }
+        if (s != null) s.close();
+    }
+
+    private int parseIntSafe(String s, int fallback) {
+        try {
+            return Integer.parseInt(s.replace("°", "").replace("%", "").trim());
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
+    // =====================================================
+    // ROM fürs Level berechnen
+    // =====================================================
+    private int calculateEffectiveRom() {
+        int effective = currentROMValue + (currentLevel - 1) * romIncreaseValue;
+        if (effective > 90) effective = 90;
+        if (effective < 0) effective = 0;
+        return effective;
+    }
+
+    // =====================================================
+    // UI + GameView setzen (mit aktuellem effective ROM)
+    // =====================================================
+    private void applySettingsToUIAndGame() {
+        int effectiveRom = calculateEffectiveRom();
+
+        levelInfoText.setText("Level: " + currentLevel);
+        romInfoText.setText("ROM: " + effectiveRom + "°");
+        supportInfoText.setText("Support: " + supportString);
+
+        gameView.setROM(effectiveRom);
+    }
+
+    // =====================================================
+    // SESSION SAVE (in SQLite)
+    // =====================================================
+    private void saveSession(boolean success) {
+        long end = System.currentTimeMillis();
+        int durationSec = (int) ((end - sessionStartMs) / 1000);
+
+        dbHelper.insertGameSession(
+                currentUser.username,
+                currentLevel,
+                currentScore,
+                success,
+                sessionStartMs,
+                end,
+                durationSec
+        );
+    }
+
+    // =====================================================
+    // AUTO-UPDATE wenn Therapeut Werte geändert hat
+    // =====================================================
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (gameView != null) gameView.resume();
+
+        // ✅ Wenn der Therapeut ROM/ROM+ geändert hat -> neu laden
+        // Optional: nur wenn noch nicht gestartet -> damit nichts "springt"
+        // Wenn du "immer" willst, entferne die if-Abfrage.
+        if (btnStart != null && btnStart.getVisibility() == View.VISIBLE) {
+            loadPatientSettings();
+            applySettingsToUIAndGame();
+        }
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        if (gameView != null) gameView.pause();
+    }
+
+    // =====================================================
+    // MQTT
+    // =====================================================
+    @Override
     protected void onStart() {
         super.onStart();
-        connectAndSubscribe();
+        connectAndSubscribeMQTT();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        // sauber trennen
         try {
-            if (client != null && client.isConnected()) {
-                client.disconnect();
+            if (mqttClient != null && mqttClient.isConnected()) {
+                mqttClient.disconnect();
             }
         } catch (Exception ignored) {}
     }
 
-    private void connectAndSubscribe() {
-        if (client == null) return;
+    private void connectAndSubscribeMQTT() {
+        if (mqttClient == null) return;
 
-        if (client.isConnected()) {
-            subscribe();
+        if (mqttClient.isConnected()) {
+            subscribeMQTT();
             return;
         }
 
-        client.connect(new SimpleMqttClient.MqttConnection(this) {
+        mqttClient.connect(new SimpleMqttClient.MqttConnection(this) {
             @Override
             public void onSuccess() {
-                subscribe();
+                subscribeMQTT();
             }
 
             @Override
@@ -153,15 +259,14 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
-    private void subscribe() {
-        client.subscribe(new SimpleMqttClient.MqttSubscription(this, MQTT_TOPIC) {
+    private void subscribeMQTT() {
+        mqttClient.subscribe(new SimpleMqttClient.MqttSubscription(this, MQTT_TOPIC) {
             @Override
             public void onMessage(String topic, String payload) {
-                // Erwartet von Python:
-                // {"user":"Test","t":"55.0;330"}
+                // Expected: {"t":"55.0;330"}  (angle;potiRaw)
                 try {
                     JSONObject obj = new JSONObject(payload);
-                    String t = obj.getString("t"); // "55.0;330"
+                    String t = obj.getString("t");
 
                     String[] parts = t.split(";");
                     if (parts.length < 2) return;
@@ -170,16 +275,8 @@ public class GameActivity extends AppCompatActivity {
                     int potiRaw = Integer.parseInt(parts[1].trim());
 
                     runOnUiThread(() -> {
-                        // 1) Winkel -> Herz hoch/runter
                         gameView.setArmAngle(angle);
-
-                        // 2) Poti -> Herzgröße (und ggf Speed) über Rohwert
-                        // Falls du meine angepasste GameView mit setPotiRaw hast:
                         gameView.setPotiRaw(potiRaw);
-
-                        // Wenn du setPotiRaw NICHT eingebaut hast, nimm stattdessen:
-                        // float slider = Math.max(0f, Math.min(1f, potiRaw / 330f));
-                        // gameView.updateDifficulty(slider);
                     });
 
                 } catch (JSONException | NumberFormatException e) {
@@ -192,17 +289,5 @@ public class GameActivity extends AppCompatActivity {
                 Log.e(TAG, "MQTT subscribe error", error);
             }
         });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (gameView != null) gameView.resume();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (gameView != null) gameView.pause();
     }
 }

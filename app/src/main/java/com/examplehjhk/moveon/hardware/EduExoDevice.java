@@ -1,20 +1,97 @@
 package com.examplehjhk.moveon.hardware;
 
-public interface EduExoDevice {
+import android.app.Activity;
+import android.util.Log;
 
-    void connect();
+import org.json.JSONObject;
 
-    void disconnect();
+import java.util.UUID;
 
-    float readArmAngle();
+public class EduExoDevice {
 
-    float readThumbSlider();
+    private static final String TAG = "EduExoDevice";
 
-    void setMotorResistance(int level);
+    private final String broker;
+    private final int port;
+    private final String topic;
 
-    void applyRestriction();
+    private final SimpleMqttClient mqtt;
+    private DeviceListener listener;
 
-    void vibrationFeedback();
+    public EduExoDevice(String broker, int port, String topic) {
+        this.broker = broker;
+        this.port = port;
+        this.topic = topic;
 
-    int getBatteryLevel();
+        this.mqtt = new SimpleMqttClient(broker, port, UUID.randomUUID().toString());
+    }
+
+    public void setListener(DeviceListener listener) {
+        this.listener = listener;
+    }
+
+    public boolean isConnected() {
+        return mqtt != null && mqtt.isConnected();
+    }
+
+    public void connectAndSubscribe(Activity activity) {
+        if (mqtt == null) return;
+
+        if (mqtt.isConnected()) {
+            subscribe(activity);
+            return;
+        }
+
+        mqtt.connect(new SimpleMqttClient.MqttConnection(activity) {
+            @Override
+            public void onSuccess() {
+                subscribe(activity);
+            }
+
+            @Override
+            public void onError(Throwable error) {
+                Log.e(TAG, "MQTT connect failed", error);
+                if (listener != null) listener.onDisconnected();
+            }
+        });
+    }
+
+    public void disconnect() {
+        try {
+            if (mqtt != null && mqtt.isConnected()) mqtt.disconnect();
+        } catch (Exception ignored) {}
+    }
+
+    private void subscribe(Activity activity) {
+        mqtt.subscribe(new SimpleMqttClient.MqttSubscription(activity, topic) {
+            @Override
+            public void onMessage(String t, String payload) {
+                // Erwartet: {"user":"Test","t":"55.0;330"}
+                try {
+                    JSONObject obj = new JSONObject(payload);
+                    String data = obj.getString("t");
+
+                    String[] parts = data.split(";");
+                    if (parts.length < 2) return;
+
+                    float angle = Float.parseFloat(parts[0].trim());
+                    int potiRaw = Integer.parseInt(parts[1].trim());
+
+                    if (listener != null) {
+                        listener.onAngleChanged(angle);
+                        listener.onSliderChanged(potiRaw);
+                    }
+
+                } catch (Exception e) {
+                    Log.e(TAG, "Parse error: " + payload, e);
+                }
+            }
+
+            @Override
+            public void onError(Throwable error) {
+                Log.e(TAG, "MQTT subscribe error", error);
+                if (listener != null) listener.onDisconnected();
+            }
+        });
+    }
 }

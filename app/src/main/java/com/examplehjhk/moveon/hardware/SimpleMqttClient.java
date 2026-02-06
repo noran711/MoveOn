@@ -1,4 +1,4 @@
-package com.examplehjhk.moveon;
+package com.examplehjhk.moveon.hardware;
 
 import android.app.Activity;
 import android.util.Log;

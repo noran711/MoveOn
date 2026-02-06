@@ -1,35 +1,24 @@
 package com.examplehjhk.moveon.domain;
 
-public abstract class User {
+import java.io.Serializable;
 
-    private String id;
-    private String username;
-    private String password;
+public class User implements Serializable {
+    public int id;
 
-    public abstract void updatePassword(String newPassword);
+    public String firstName;
+    public String lastName;
+    public String birthDate;
+    public String phone;
 
-    // Standard Getters and Setters
-    public String getId() {
-        return id;
-    }
+    public String username;
+    public String password;
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public String gender;   // "Female" / "Male"
+    public String role;     // "Patient" / "Therapeut"
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+    public String getFullName() {
+        String fn = firstName == null ? "" : firstName;
+        String ln = lastName == null ? "" : lastName;
+        return (fn + " " + ln).trim();
     }
 }

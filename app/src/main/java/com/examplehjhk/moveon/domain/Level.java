@@ -1,29 +1,47 @@
 package com.examplehjhk.moveon.domain;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
-public class Level {
+public class Level implements Serializable {
 
     private int levelNumber;
     private boolean isLocked;
     private int obstacleCount;
     private List<Stage> stages;
 
+    public Level() {
+        this.levelNumber = 1;
+        this.isLocked = false;
+        this.obstacleCount = 30;     // Standard wie bisher
+        this.stages = new ArrayList<>();
+    }
+
+    public Level(int levelNumber) {
+        this();
+        this.levelNumber = levelNumber;
+    }
+
     public void unlock() {
         this.isLocked = false;
     }
 
+    /** Minimal UML-konform: wenn du Stages noch nicht wirklich nutzt, passt das so. */
     public boolean isCompleted(Patient patient) {
-        // Logic to check if all stages are completed by the patient
-        return false;
+        // Wenn du später Stages wirklich nutzt, kannst du hier prüfen,
+        // ob patient alle stages abgeschlossen hat.
+        return true;
     }
 
     public Stage getNextStage(int currentStageIndex) {
-        // Logic to get the next stage
-        return null;
+        if (stages == null || stages.isEmpty()) return null;
+        int next = currentStageIndex + 1;
+        if (next < 0 || next >= stages.size()) return null;
+        return stages.get(next);
     }
 
-    // Standard Getters and Setters
+    // ===== Getters & Setters =====
     public int getLevelNumber() {
         return levelNumber;
     }

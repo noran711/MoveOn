@@ -12,6 +12,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.examplehjhk.moveon.data.DBHelper;
+import com.examplehjhk.moveon.domain.User;
+
 public class Login extends AppCompatActivity {
 
     private EditText editUsername, editPassword;
@@ -27,9 +30,7 @@ public class Login extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().hide();
-        }
+        if (getSupportActionBar() != null) getSupportActionBar().hide();
 
         dbHelper = new DBHelper(this);
 
@@ -68,26 +69,25 @@ public class Login extends AppCompatActivity {
             return;
         }
 
-        // Alle Daten aus der DB holen
-        String fName = c.getString(c.getColumnIndexOrThrow("first_name"));
-        String lName = c.getString(c.getColumnIndexOrThrow("last_name"));
-        String uName = c.getString(c.getColumnIndexOrThrow("username"));
-        String role  = c.getString(c.getColumnIndexOrThrow("role"));
-        String gender = c.getString(c.getColumnIndexOrThrow("gender"));
+        User loggedInUser = new User();
+        loggedInUser.firstName = c.getString(c.getColumnIndexOrThrow("first_name"));
+        loggedInUser.lastName  = c.getString(c.getColumnIndexOrThrow("last_name"));
+        loggedInUser.username  = c.getString(c.getColumnIndexOrThrow("username"));
+        loggedInUser.role      = c.getString(c.getColumnIndexOrThrow("role"));
+        loggedInUser.gender    = c.getString(c.getColumnIndexOrThrow("gender"));
+        loggedInUser.birthDate = c.getString(c.getColumnIndexOrThrow("birth_date"));
+        loggedInUser.phone     = c.getString(c.getColumnIndexOrThrow("phone"));
 
         c.close();
 
-        // User-Objekt erstellen
-        User loggedInUser = new User();
-        loggedInUser.firstName = fName;
-        loggedInUser.lastName = lName;
-        loggedInUser.username = uName;
-        loggedInUser.role = role;
-        loggedInUser.gender = gender;
+        Toast.makeText(this, "Willkommen, " + loggedInUser.firstName, Toast.LENGTH_SHORT).show();
 
-        Toast.makeText(this, "Willkommen, " + fName, Toast.LENGTH_SHORT).show();
-
-        Intent intent = new Intent(Login.this, MainActivity.class);
+        Intent intent;
+        if ("Therapeut".equalsIgnoreCase(loggedInUser.role)) {
+            intent = new Intent(Login.this, TherapistDashboardActivity.class);
+        } else {
+            intent = new Intent(Login.this, MainActivity.class);
+        }
         intent.putExtra("user", loggedInUser);
         startActivity(intent);
         finish();

@@ -1,79 +1,42 @@
 package com.examplehjhk.moveon.domain;
 
-public class Obstacle {
+import java.io.Serializable;
+import java.util.Random;
 
-    private int obstacleNumber;
-    private float x;
-    private float gapCenterY;
-    private float width;
-    private float gapSize;
-    private float gabROM;
-    private boolean passed;
+public class Obstacle implements Serializable {
+    public float x;
+    public float width = 150f;
 
-    public boolean isOffScreen() {
-        // Logic to check if the obstacle is off-screen
-        return x + width < 0;
+    public float gapY;
+    public float gapSize = 400f;
+
+    public boolean passed = false;
+
+    public Obstacle(int screenX, int screenY, int rom, float birdHeight, Random random) {
+        this.x = screenX;
+
+        float maxY = screenY;
+        float minY_at_ROM = screenY - (rom / 90f * (screenY - birdHeight));
+
+        float targetHeartTipY = minY_at_ROM + random.nextFloat() * (maxY - minY_at_ROM);
+        float heartCenterY = targetHeartTipY - (birdHeight / 2f);
+
+        this.gapY = heartCenterY - (gapSize / 2f);
+        if (gapY < 0) gapY = 0;
+        if (gapY + gapSize > screenY) gapY = screenY - gapSize;
     }
 
-    public boolean checkCollision(Bird bird) {
-        // Logic to check for collision with the bird
+    public boolean collides(Bird bird) {
+        float hitBoxWidth = bird.getHitBoxWidth();
+        float scaledHeight = bird.getScaledHeight();
+
+        float hX = bird.x;
+        float hY = bird.y;
+
+        if (hX + hitBoxWidth > x && hX - hitBoxWidth < x + width) {
+            if (hY - scaledHeight < gapY) return true;
+            if (hY > gapY + gapSize) return true;
+        }
         return false;
-    }
-
-    // Standard Getters and Setters
-    public int getObstacleNumber() {
-        return obstacleNumber;
-    }
-
-    public void setObstacleNumber(int obstacleNumber) {
-        this.obstacleNumber = obstacleNumber;
-    }
-
-    public float getX() {
-        return x;
-    }
-
-    public void setX(float x) {
-        this.x = x;
-    }
-
-    public float getGapCenterY() {
-        return gapCenterY;
-    }
-
-    public void setGapCenterY(float gapCenterY) {
-        this.gapCenterY = gapCenterY;
-    }
-
-    public float getWidth() {
-        return width;
-    }
-
-    public void setWidth(float width) {
-        this.width = width;
-    }
-
-    public float getGapSize() {
-        return gapSize;
-    }
-
-    public void setGapSize(float gapSize) {
-        this.gapSize = gapSize;
-    }
-
-    public float getGabROM() {
-        return gabROM;
-    }
-
-    public void setGabROM(float gabROM) {
-        this.gabROM = gabROM;
-    }
-
-    public boolean isPassed() {
-        return passed;
-    }
-
-    public void setPassed(boolean passed) {
-        this.passed = passed;
     }
 }
