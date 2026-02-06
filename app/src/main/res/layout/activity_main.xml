@@ -40,7 +40,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="MoveOn"
-                android:textColor="#2C3E50"
+                android:textColor="#048CFA"
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
@@ -79,9 +79,9 @@
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Settings"
             android:src="@android:drawable/ic_menu_manage"
-            app:tint="#A29BFE"
-            android:contentDescription="Settings" />
+            app:tint="#048CFA" />
     </RelativeLayout>
 
     <!-- Path of Levels -->
@@ -106,15 +106,15 @@
                 android:layout_height="100dp"
                 android:layout_marginTop="40dp"
                 android:background="@drawable/circle_button"
+                android:elevation="0dp"
                 android:text="1"
                 android:textColor="#FFFFFF"
                 android:textSize="24sp"
                 android:textStyle="bold"
-                android:elevation="0dp"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintHorizontal_bias="0.5" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -123,9 +123,9 @@
                 android:textColor="#2C3E50"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                app:layout_constraintTop_toBottomOf="@id/btnPlay"
+                app:layout_constraintEnd_toEndOf="@id/btnPlay"
                 app:layout_constraintStart_toStartOf="@id/btnPlay"
-                app:layout_constraintEnd_toEndOf="@id/btnPlay" />
+                app:layout_constraintTop_toBottomOf="@id/btnPlay" />
 
             <!-- Level 2 Circle (Ausgegraut) -->
             <Button
@@ -133,17 +133,17 @@
                 android:layout_width="85dp"
                 android:layout_height="85dp"
                 android:layout_marginTop="120dp"
-                android:background="@drawable/circle_button"
-                android:backgroundTint="#D1D8E0"
                 android:alpha="0.5"
-                android:text="2"
-                android:textColor="#7F8C8D"
-                android:textSize="20sp"
+                android:background="@drawable/circle_button"
+                android:backgroundTint="#FBFBFB"
                 android:elevation="0dp"
+                android:text="2"
+                android:textColor="#F9FBFB"
+                android:textSize="20sp"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.25"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/btnPlay"
-                app:layout_constraintHorizontal_bias="0.25" />
+                app:layout_constraintTop_toBottomOf="@id/btnPlay" />
 
             <!-- Level 3 Circle (Ausgegraut) -->
             <Button
@@ -151,17 +151,17 @@
                 android:layout_width="85dp"
                 android:layout_height="85dp"
                 android:layout_marginTop="100dp"
+                android:alpha="0.5"
                 android:background="@drawable/circle_button"
                 android:backgroundTint="#D1D8E0"
-                android:alpha="0.5"
-                android:text="3"
-                android:textColor="#7F8C8D"
-                android:textSize="20sp"
                 android:elevation="0dp"
+                android:text="3"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.75"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/level2"
-                app:layout_constraintHorizontal_bias="0.75" />
+                app:layout_constraintTop_toBottomOf="@id/level2" />
 
             <!-- Level 4 Circle (Ausgegraut) -->
             <Button
@@ -169,17 +169,17 @@
                 android:layout_width="85dp"
                 android:layout_height="85dp"
                 android:layout_marginTop="100dp"
+                android:alpha="0.5"
                 android:background="@drawable/circle_button"
                 android:backgroundTint="#D1D8E0"
-                android:alpha="0.5"
-                android:text="4"
-                android:textColor="#7F8C8D"
-                android:textSize="20sp"
                 android:elevation="0dp"
+                android:text="4"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.3"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/level3"
-                app:layout_constraintHorizontal_bias="0.3" />
+                app:layout_constraintTop_toBottomOf="@id/level3" />
 
             <TextView
                 android:layout_width="wrap_content"

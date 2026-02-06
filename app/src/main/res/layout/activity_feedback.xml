@@ -51,7 +51,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Good Job!"
-                    android:textColor="#9370DB"
+                    android:textColor="#048CFA"
                     android:textSize="32sp"
                     android:textStyle="bold" />
 
@@ -127,22 +127,22 @@
             android:id="@+id/btnRestart"
             android:layout_width="match_parent"
             android:layout_height="60dp"
+            android:backgroundTint="#048CFA"
             android:text="Next Level"
             android:textSize="18sp"
-            android:backgroundTint="#9370DB"
             app:cornerRadius="12dp" />
 
         <Button
             android:id="@+id/btnBackHome"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginTop="12dp"
             android:text="Back to Home"
+            android:textColor="#048CFA"
             android:textSize="18sp"
-            android:textColor="#9370DB"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            app:strokeColor="#9370DB"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="12dp"
+            app:strokeColor="#048CFA" />
     </LinearLayout>
 
 </LinearLayout>

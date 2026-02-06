@@ -3,10 +3,15 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     
-    <!-- Primäre Markenfarben (basierend auf dem Logo) -->
-    <color name="moveon_primary">#005BBB</color> <!-- Das Blau aus dem Logo -->
-    <color name="moveon_accent">#004A99</color>
+    <!-- Primary Colors for Day Modus (based at the Logo) -->
+    <color name="moveon_primary">#048CFA</color> <!-- Das Blau aus dem Logo -->
+    <color name="moveon_accent">#048CFA</color>
     <color name="moveon_background">#DFF3FF</color>
+
+    <!-- Primary Colors for Night Modus (based at the Logo) -->
+    <color name="moveon_primary_night">#048CFA</color> <!-- Das Blau aus dem Logo -->
+    <color name="moveon_accent_night">#048CFA</color>
+    <color name="moveon_background_night">#060945</color>
     
     <!-- Hindernisse (Kontrastreich zum Blau) -->
     <color name="obstacle_color">#FF8C00</color> <!-- Ein warmes Orange/Bernstein -->
