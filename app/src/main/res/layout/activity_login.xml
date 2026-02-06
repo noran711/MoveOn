@@ -90,15 +90,17 @@
                 android:id="@+id/radioPatient"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Patient"
-                android:checked="true" />
+                android:buttonTint="#048CFA"
+                android:checked="true"
+                android:text="Patient" />
 
             <RadioButton
                 android:id="@+id/radioTherapist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Therapist"
-                android:layout_marginStart="20dp" />
+                android:layout_marginStart="20dp"
+                android:buttonTint="#048CFA"
+                android:text="Therapist" />
 
         </RadioGroup>
 
@@ -107,11 +109,12 @@
             android:id="@+id/buttonLogin"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Login"
             android:layout_marginTop="26dp"
-            app:layout_constraintTop_toBottomOf="@id/radioGroupRole"
+            android:backgroundTint="#048CFA"
+            android:text="Login"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/radioGroupRole" />
 
         <!-- Registrieren -->
         <TextView

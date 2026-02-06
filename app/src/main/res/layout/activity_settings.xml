@@ -105,11 +105,12 @@
                             android:layout_marginEnd="8dp"
                             android:textSize="16sp"
                             tools:text="user"/>
+
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:src="@android:drawable/ic_media_play"
-                            app:tint="#005BBB" />
+                            app:tint="#048CFA" />
                     </LinearLayout>
 
                     <!-- Password -->
@@ -136,11 +137,12 @@
                             android:layout_marginEnd="8dp"
                             android:textSize="16sp"
                             tools:text="••••••••"/>
+
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:src="@android:drawable/ic_media_play"
-                            app:tint="#005BBB" />
+                            app:tint="#048CFA" />
                     </LinearLayout>
 
                     <RadioGroup
@@ -165,7 +167,7 @@
                         android:id="@+id/btnDeleteAccount"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:backgroundTint="#9370DB"
+                        android:backgroundTint="#048CFA"
                         android:text="Logout" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -183,11 +185,14 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="12dp">
+
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchDarkMode"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Dark Mode" />
+                        android:text="Dark Mode"
+                        app:thumbTint="#048CFA"
+                        app:trackTint="#DFF3FF" />
 
                     <!-- Notifications -->
                     <CheckBox
@@ -195,8 +200,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Allow Notifications"
-                        android:buttonTint="#005BBB" />
+                        android:buttonTint="#048CFA"
+                        android:text="Allow Notifications" />
 
                     <!-- ROM -->
                     <LinearLayout
@@ -210,7 +215,12 @@
                         android:paddingVertical="8dp">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Initial ROM" android:textSize="16sp"/>
                         <TextView android:id="@+id/romValue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:layout_marginEnd="8dp" android:textSize="16sp" tools:text="30°" />
-                        <ImageView android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@android:drawable/ic_media_play" app:tint="#005BBB" />
+
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@android:drawable/ic_media_play"
+                            app:tint="#048CFA" />
                     </LinearLayout>
 
                     <!-- ROM Increase -->
@@ -225,7 +235,12 @@
                         android:paddingVertical="8dp">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ROM Increase per Level" android:textSize="16sp"/>
                         <TextView android:id="@+id/romIncreaseValue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:layout_marginEnd="8dp" android:textSize="16sp" tools:text="5°" />
-                        <ImageView android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@android:drawable/ic_media_play" app:tint="#005BBB" />
+
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@android:drawable/ic_media_play"
+                            app:tint="#048CFA" />
                     </LinearLayout>
 
                     <!-- Support -->
@@ -240,7 +255,12 @@
                         android:paddingVertical="8dp">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Support" android:textSize="16sp"/>
                         <TextView android:id="@+id/supportValue" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:layout_marginEnd="8dp" android:textSize="16sp" tools:text="10 %" />
-                        <ImageView android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@android:drawable/ic_media_play" app:tint="#005BBB" />
+
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@android:drawable/ic_media_play"
+                            app:tint="#048CFA" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -253,11 +273,13 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp">
+
         <Button
             android:id="@+id/buttonSave"
-            android:layout_width="200dp"
+            android:layout_width="198dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
+            android:backgroundTint="#048CFA"
             android:text="Save" />
         <TextView
             android:id="@+id/textVersion"
