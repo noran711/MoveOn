@@ -20,6 +20,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
+import com.examplehjhk.moveon.domain.User;
 import com.google.android.material.button.MaterialButton;
 
 public class GroupsActivity extends AppCompatActivity {
