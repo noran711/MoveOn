@@ -290,4 +290,7 @@
             android:text="Version 1.1"
             android:textSize="12sp" />
     </LinearLayout>
+
+    <include layout="@layout/bottom_navigation" />
+
 </LinearLayout>

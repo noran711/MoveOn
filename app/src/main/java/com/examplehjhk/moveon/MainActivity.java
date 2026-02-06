@@ -2,9 +2,11 @@ package com.examplehjhk.moveon;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.Button;
-import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -29,14 +31,12 @@ public class MainActivity extends AppCompatActivity {
 
         currentUser = (User) getIntent().getSerializableExtra("user");
 
-        // Optional: falls MainActivity mal ohne User gestartet wird
         if (currentUser == null) {
             startActivity(new Intent(this, Login.class));
             finish();
             return;
         }
 
-        // Dark Mode laden
         SharedPreferences settingsPrefs = getSharedPreferences("settings", MODE_PRIVATE);
         boolean isDarkMode = settingsPrefs.getBoolean("dark_mode", false);
         AppCompatDelegate.setDefaultNightMode(isDarkMode
@@ -52,12 +52,10 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // UI-Elemente
         streakCountText = findViewById(R.id.streakCountText);
         levelScrollView = findViewById(R.id.levelScrollView);
         checkAndRefreshStreak();
 
-        // Level 1 Button
         Button btnPlay = findViewById(R.id.btnPlay);
         btnPlay.setOnClickListener(v -> {
             updateStreakOnPlay();
@@ -67,16 +65,32 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Settings Button
-        ImageButton btnSettings = findViewById(R.id.btnSettings);
-        btnSettings.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, Settings.class);
+        setupBottomNavigation();
+        scrollToCurrentLevel();
+    }
+
+    private void setupBottomNavigation() {
+        LinearLayout navHome = findViewById(R.id.navHome);
+        LinearLayout navGroups = findViewById(R.id.navGroups);
+        LinearLayout navSettings = findViewById(R.id.navSettings);
+
+        // Highlight Home (Current Screen)
+        ImageView iconHome = findViewById(R.id.iconHome);
+        TextView textHome = findViewById(R.id.textHome);
+        iconHome.setColorFilter(Color.parseColor("#048CFA"));
+        textHome.setTextColor(Color.parseColor("#048CFA"));
+
+        navGroups.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, GroupsActivity.class);
             intent.putExtra("user", currentUser);
             startActivity(intent);
         });
 
-        // Automatisches Scrollen zum aktuellen Level (Beispiel Level 1)
-        scrollToCurrentLevel();
+        navSettings.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, Settings.class);
+            intent.putExtra("user", currentUser);
+            startActivity(intent);
+        });
     }
 
     private void scrollToCurrentLevel() {

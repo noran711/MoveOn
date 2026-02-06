@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/bottomNavigation"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:background="#FFFFFF"
+    android:elevation="10dp"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:translationZ="10dp">
+
+    <!-- Home -->
+    <LinearLayout
+        android:id="@+id/navHome"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconHome"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/icn_home"
+            app:tint="#808080" />
+        <TextView
+            android:id="@+id/textHome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Home"
+            android:textSize="12sp"
+            android:textColor="#808080" />
+    </LinearLayout>
+
+    <!-- Groups -->
+    <LinearLayout
+        android:id="@+id/navGroups"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconGroups"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/ic_groups"
+            app:tint="#808080" />
+        <TextView
+            android:id="@+id/textGroups"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Groups"
+            android:textSize="12sp"
+            android:textColor="#808080" />
+    </LinearLayout>
+
+    <!-- Settings -->
+    <LinearLayout
+        android:id="@+id/navSettings"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconSettings"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@android:drawable/ic_menu_manage"
+            app:tint="#808080" />
+        <TextView
+            android:id="@+id/textSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textSize="12sp"
+            android:textColor="#808080" />
+    </LinearLayout>
+
+</LinearLayout>

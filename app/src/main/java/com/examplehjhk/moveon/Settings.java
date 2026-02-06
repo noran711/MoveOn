@@ -2,12 +2,14 @@ package com.examplehjhk.moveon;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -97,7 +99,7 @@ public class Settings extends AppCompatActivity {
             });
         }
 
-        // Home Button
+        // Home Button (Logo)
         ImageView homeButton = findViewById(R.id.btnHome);
         homeButton.setOnClickListener(v -> {
             Intent intent = new Intent(Settings.this, MainActivity.class);
@@ -105,6 +107,32 @@ public class Settings extends AppCompatActivity {
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();
+        });
+
+        setupBottomNavigation();
+    }
+
+    private void setupBottomNavigation() {
+        LinearLayout navHome = findViewById(R.id.navHome);
+        LinearLayout navGroups = findViewById(R.id.navGroups);
+        LinearLayout navSettings = findViewById(R.id.navSettings);
+
+        // Highlight Settings (Current Screen)
+        ImageView iconSettings = findViewById(R.id.iconSettings);
+        TextView textSettings = findViewById(R.id.textSettings);
+        iconSettings.setColorFilter(Color.parseColor("#048CFA"));
+        textSettings.setTextColor(Color.parseColor("#048CFA"));
+
+        navHome.setOnClickListener(v -> {
+            Intent intent = new Intent(Settings.this, MainActivity.class);
+            intent.putExtra("user", currentUser);
+            startActivity(intent);
+        });
+
+        navGroups.setOnClickListener(v -> {
+            Intent intent = new Intent(Settings.this, GroupsActivity.class);
+            intent.putExtra("user", currentUser);
+            startActivity(intent);
         });
     }
 
