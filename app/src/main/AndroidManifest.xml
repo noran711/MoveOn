@@ -51,6 +51,12 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
+
+        <activity android:name=".TherapistDashboardActivity" />
+        <activity android:name=".TherapistDashboardActivity" />
+        <activity android:name=".PatientDetailActivity" />
+
+
     </application>
 
 </manifest>

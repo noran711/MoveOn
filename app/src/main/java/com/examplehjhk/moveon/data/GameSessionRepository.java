@@ -7,23 +7,27 @@ import java.util.List;
 
 public class GameSessionRepository {
 
-    // In-Memory Speicher (für Prototyp / Demo)
+    // Minimal: In-Memory Speicher (für Abgabe/Prototyp)
     private static final List<GameSession> SESSIONS = new ArrayList<>();
 
-    /** Speichert eine abgeschlossene GameSession */
     public void save(GameSession session) {
         if (session == null) return;
         SESSIONS.add(session);
     }
 
-    /** Lädt alle Sessions eines Patienten (Filter später möglich) */
-    public List<GameSession> loadSessions(String patientId) {
-        // patientId wird aktuell noch nicht gefiltert
-        return new ArrayList<>(SESSIONS);
+    // Patient: nur eigene Daten
+    public List<GameSession> loadSessionsForPatient(String patientUsername) {
+        List<GameSession> out = new ArrayList<>();
+        if (patientUsername == null) return out;
+
+        for (GameSession s : SESSIONS) {
+            if (patientUsername.equalsIgnoreCase(s.patientUsername)) out.add(s);
+        }
+        return out;
     }
 
-    /** Nur für Debug / Tests */
-    public int getSessionCount() {
-        return SESSIONS.size();
+    // Therapeut: alle Daten
+    public List<GameSession> loadAllSessions() {
+        return new ArrayList<>(SESSIONS);
     }
 }
