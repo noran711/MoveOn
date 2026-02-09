@@ -2,31 +2,45 @@ package com.examplehjhk.moveon.domain;
 
 import java.io.Serializable;
 
+/**
+ * Represents a specific stage within a game level.
+ * Defines the parameters for the therapy game, such as support levels and ROM range.
+ */
 public class Stage implements Serializable {
 
     private int stageNumber;
 
-    /** Unterstützungsgrad in Prozent (z.B. 10 = 10 %) */
+    /** Degree of support in percent */
     private int supportPercent;
 
-    /** Minimaler erlaubter ROM-Wert (Grad) */
+    /** Minimum allowed ROM value in degrees */
     private int minRom;
 
-    /** Maximaler erlaubter ROM-Wert (Grad) */
+    /** Maximum allowed ROM value in degrees */
     private int maxRom;
 
-    /** Anzahl der Hindernisse, die in dieser Stage überwunden werden müssen */
+    /** Number of obstacles that must be overcome to pass this stage */
     private int obstacleCount;
 
-    /** Status */
+    /** Completion status of the stage */
     private boolean completed = false;
 
-    // ===== Konstruktoren =====
+    // ===== Constructors =====
 
-    /** Leerer Konstruktor (z.B. für Serialisierung) */
+    /**
+     * Default constructor
+     */
     public Stage() {}
 
-    /** Voller Konstruktor (empfohlen) */
+    /**
+     * Full constructor
+     *
+     * @param stageNumber    The sequence number of the stage
+     * @param supportPercent The assistance level provided to the patient
+     * @param minRom         The minimum Range of Motion required
+     * @param maxRom         The maximum Range of Motion required
+     * @param obstacleCount  Number of obstacles to be cleared
+     */
     public Stage(int stageNumber,
                  int supportPercent,
                  int minRom,
@@ -40,24 +54,35 @@ public class Stage implements Serializable {
         this.obstacleCount = obstacleCount;
     }
 
-    // ===== Logik =====
 
-    /** Prüft, ob die Stage bestanden wurde */
+
+    /**
+     * Checks if the stage has been passed based on the number of obstacles cleared.
+     *
+     * @param obstaclesCleared The count of obstacles the player successfully passed
+     * @return true if the cleared count meets or exceeds the required count
+     */
     public boolean isPassed(int obstaclesCleared) {
         return obstaclesCleared >= obstacleCount;
     }
 
-    /** Markiert die Stage als abgeschlossen */
+    /**
+     * Marks the stage as successfully completed.
+     */
     public void markCompleted() {
         this.completed = true;
     }
 
-    /** Prüft, ob ein ROM-Wert innerhalb der Stage-Grenzen liegt */
+    /**
+     * Checks if a specific ROM value lies within the allowed boundaries of this stage.
+     *
+     * @param rom The Range of Motion value to check
+     * @return true if the value is between minRom and maxRom
+     */
     public boolean isRomAllowed(int rom) {
         return rom >= minRom && rom <= maxRom;
     }
 
-    // ===== Getter / Setter =====
 
     public int getStageNumber() {
         return stageNumber;

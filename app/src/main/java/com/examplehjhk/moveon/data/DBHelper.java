@@ -8,55 +8,64 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import androidx.annotation.Nullable;
 
+/**
+ * DBHelper manages the local SQLite database for the application.
+ * It handles table creation, version management, and data access.
+ */
 public class DBHelper extends SQLiteOpenHelper {
 
+    // Database metadata
     private static final String DB_NAME = "moveon.db";
-    // ✅ VERSION HOCHSETZEN, sonst werden neue Tabellen nicht erstellt
     private static final int DB_VERSION = 2;
 
-    // ===== USERS =====
+    // Table names
     public static final String TABLE_USERS = "users";
-
-    // ===== GAME SESSIONS =====
     public static final String TABLE_SESSIONS = "game_sessions";
-
-    // ===== PATIENT SETTINGS (ROM etc. pro Patient) =====
     public static final String TABLE_PATIENT_SETTINGS = "patient_settings";
 
+    /**
+     * Constructor for the Database Helper.
+     * @param context The application context.
+     */
     public DBHelper(@Nullable Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
 
+    /**
+     * Called when the database is created for the first time.
+     * Defines the schema for all required tables.
+     */
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // USERS
+
+        // Define SQL statement to create the Users table
         String createUsers = "CREATE TABLE " + TABLE_USERS + " (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "first_name TEXT, " +
                 "last_name TEXT, " +
                 "birth_date TEXT, " +
                 "phone TEXT, " +
-                "username TEXT UNIQUE, " +
+                "username TEXT UNIQUE, " + // Unique constraint to prevent duplicate usernames
                 "password TEXT, " +
                 "gender TEXT, " +
                 "role TEXT" +
                 ");";
         db.execSQL(createUsers);
 
-        // GAME SESSIONS
+        // Define SQL statement to create the Game Sessions table
         String createSessions = "CREATE TABLE " + TABLE_SESSIONS + " (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "patient_username TEXT, " +
                 "level_number INTEGER, " +
                 "obstacles_cleared INTEGER, " +
-                "success INTEGER, " +
+                "success INTEGER, " + // Stored as 0 or 1
                 "start_time_ms INTEGER, " +
                 "end_time_ms INTEGER, " +
                 "duration_sec INTEGER" +
                 ");";
         db.execSQL(createSessions);
 
-        // PATIENT SETTINGS (ROM/SUPPORT pro Patient)
+        // Define SQL statement for therapy-related settings (ROM and support)
         String createPatientSettings = "CREATE TABLE " + TABLE_PATIENT_SETTINGS + " (" +
                 "patient_username TEXT PRIMARY KEY, " +
                 "rom INTEGER, " +
@@ -66,17 +75,22 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL(createPatientSettings);
     }
 
+    /**
+     * Called when the database needs to be upgraded.
+     * Currently drops all tables and recreates them from scratch.
+     */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Für einfach: neu aufbauen (Achtung: löscht Daten). Für Abgabe oft ok.
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_PATIENT_SETTINGS);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_SESSIONS);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
         onCreate(db);
     }
 
-    // ===================== USERS =====================
-
+    /**
+     * Inserts a new user record into the database.
+     * @return true if successful, false otherwise.
+     */
     public boolean insertUser(String firstName, String lastName, String birthDate,
                               String phone, String username, String password,
                               String gender, String role) {
@@ -96,6 +110,10 @@ public class DBHelper extends SQLiteOpenHelper {
         return result != -1;
     }
 
+    /**
+     * Queries the database for a specific user based on login credentials.
+     * @return A Cursor pointing to the result set.
+     */
     public Cursor getUserForLogin(String username, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.query(
@@ -107,7 +125,10 @@ public class DBHelper extends SQLiteOpenHelper {
         );
     }
 
-    /** ✅ Therapeut: alle Patienten (nur role = Patient) */
+    /**
+     * Retrieves all users registered with the 'Patient' role.
+     * Sorted alphabetically by last name.
+     */
     public Cursor getAllPatients() {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.query(
@@ -120,9 +141,10 @@ public class DBHelper extends SQLiteOpenHelper {
         );
     }
 
-    // ===================== PATIENT SETTINGS =====================
-
-    /** Insert oder Update Settings pro Patient */
+    /**
+     * Updates or inserts (Upsert) therapy settings for a specific patient.
+     * Uses CONFLICT_REPLACE to overwrite existing entries for the same username.
+     */
     public void upsertPatientSettings(String patientUsername, int rom, int romIncrease, int supportPercent) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -132,11 +154,12 @@ public class DBHelper extends SQLiteOpenHelper {
         v.put("rom_increase", romIncrease);
         v.put("support_percent", supportPercent);
 
-        // replace = Upsert
         db.insertWithOnConflict(TABLE_PATIENT_SETTINGS, null, v, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
-    /** Lädt Settings für Patient (kann null sein wenn noch nicht gesetzt) */
+    /**
+     * Retrieves specific therapy settings for a given patient.
+     */
     public Cursor getPatientSettings(String patientUsername) {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.query(
@@ -148,8 +171,9 @@ public class DBHelper extends SQLiteOpenHelper {
         );
     }
 
-    // ===================== GAME SESSIONS =====================
-
+    /**
+     * Logs the completion of a game session.
+     */
     public void insertGameSession(String patientUsername,
                                   int levelNumber,
                                   int obstaclesCleared,
@@ -163,7 +187,7 @@ public class DBHelper extends SQLiteOpenHelper {
         v.put("patient_username", patientUsername);
         v.put("level_number", levelNumber);
         v.put("obstacles_cleared", obstaclesCleared);
-        v.put("success", success ? 1 : 0);
+        v.put("success", success ? 1 : 0); // Convert boolean to SQLite compatible integer
         v.put("start_time_ms", startTimeMs);
         v.put("end_time_ms", endTimeMs);
         v.put("duration_sec", durationSec);
@@ -171,7 +195,9 @@ public class DBHelper extends SQLiteOpenHelper {
         db.insert(TABLE_SESSIONS, null, v);
     }
 
-    /** ✅ Therapeut/Patient: Sessions eines Patienten */
+    /**
+     * Retrieves all game history for a specific patient, most recent sessions first.
+     */
     public Cursor getSessionsForPatient(String patientUsername) {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.query(

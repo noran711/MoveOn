@@ -30,7 +30,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    // ✅ Fix für Netty Duplicate META-INF Dateien (HiveMQ / Netty)
     packaging {
         resources {
             excludes += "META-INF/INDEX.LIST"
@@ -50,16 +49,13 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    // ❌ raus: implementation(libs.compiler)
 
-    // ✅ Room Database (Java korrekt)
+
+
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
-    // room-ktx ist optional (eher für Kotlin). Du kannst es drin lassen oder rausnehmen:
-    // implementation("androidx.room:room-ktx:$roomVersion")
 
-    // ✅ MQTT (HiveMQ)
     implementation("com.hivemq:hivemq-mqtt-client:1.3.0")
 
     testImplementation(libs.junit)

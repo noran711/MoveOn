@@ -15,23 +15,35 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
- * A wrapper class for easier usage of HiveMQ mqtt library
+ * A wrapper class designed to simplify the usage of the HiveMQ MQTT library.
+ * It automatically handles switching from background network threads back to the
+ * Main (UI) thread for callbacks.
  */
 public class SimpleMqttClient {
 
     //region Callback class definitions
+
+    /**
+     * Base abstract class for handling the results of asynchronous MQTT operations.
+     * @param <T> The type of the acknowledgment message.
+     */
     private static abstract class MqttOperationResult<T> implements BiConsumer<T, Throwable> {
         protected Activity activity;
 
+        /**
+         * @param activity The context used to run callbacks on the UI thread.
+         */
         public MqttOperationResult(Activity activity) {
             this.activity = activity;
         }
 
         @Override
         public void accept(T ack, Throwable throwable) {
-            if(throwable == null) {
-                // success
+            if (throwable == null) {
+                // Operation was successful
                 logSuccess();
+                // Network operations happen on background threads;
+                // we must use runOnUiThread to update any UI elements.
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -39,7 +51,7 @@ public class SimpleMqttClient {
                     }
                 });
             } else {
-                //error
+                // An error occurred during the operation
                 logError(throwable);
                 activity.runOnUiThread(new Runnable() {
                     @Override
@@ -55,15 +67,18 @@ public class SimpleMqttClient {
         protected abstract void logError(Throwable error);
 
         public void onSuccess() {
-            // do nothing
+            // Optional override for UI success logic
         }
 
         public void onError(Throwable error) {
-            // do nothing
+            // Optional override for UI error logic
         }
     }
 
-    public static abstract class MqttConnection extends MqttOperationResult<Mqtt3ConnAck>{
+    /**
+     * Specialized handler for MQTT connection attempts.
+     */
+    public static abstract class MqttConnection extends MqttOperationResult<Mqtt3ConnAck> {
 
         public MqttConnection(Activity activity) {
             super(activity);
@@ -80,6 +95,9 @@ public class SimpleMqttClient {
         }
     }
 
+    /**
+     * Specialized handler for subscriptions and incoming message processing.
+     */
     public static abstract class MqttSubscription extends MqttOperationResult<Mqtt3SubAck> implements Consumer<Mqtt3Publish> {
         private final String topic;
 
@@ -92,6 +110,9 @@ public class SimpleMqttClient {
             this.topic = topic;
         }
 
+        /**
+         * Callback triggered when a message arrives on the subscribed topic.
+         */
         public abstract void onMessage(String topic, String payload);
 
         @Override
@@ -104,6 +125,10 @@ public class SimpleMqttClient {
             Log.e("MQTT", String.format("Unable to subscribe to '%s'", topic), error);
         }
 
+        /**
+         * Internal HiveMQ callback triggered when a new message is published.
+         * Automatically routes the payload back to the UI thread.
+         */
         @Override
         public void accept(Mqtt3Publish mqtt3Publish) {
             activity.runOnUiThread(new Runnable() {
@@ -119,6 +144,9 @@ public class SimpleMqttClient {
         }
     }
 
+    /**
+     * Specialized handler for publishing messages.
+     */
     public static abstract class MqttPublish extends MqttOperationResult<Mqtt3Publish> {
         private final String topic;
         private final String payload;
@@ -167,46 +195,66 @@ public class SimpleMqttClient {
         return identifier;
     }
 
+    /**
+     * @return true if the client is currently connected to the MQTT broker.
+     */
     public boolean isConnected() {
         return client.getState() == MqttClientState.CONNECTED;
     }
     //endregion
 
+    /**
+     * Initializes the MQTT client with host, port, and a unique identifier.
+     */
     public SimpleMqttClient(String serverHost, int serverPort, String clientIdentifier) {
         this.serverHost = serverHost;
         this.serverPort = serverPort;
         this.identifier = clientIdentifier;
 
-        this.client = Mqtt3Client.builder().serverHost(serverHost).serverPort(serverPort).identifier(clientIdentifier).buildAsync();
+        this.client = Mqtt3Client.builder()
+                .serverHost(serverHost)
+                .serverPort(serverPort)
+                .identifier(clientIdentifier)
+                .buildAsync();
     }
 
     //region MQTT service methods
-    // Connect method (asynchronous)
+
+    /**
+     * Initiates an asynchronous connection to the broker.
+     */
     public void connect(MqttConnection conn) {
         this.client.connect().whenComplete(conn);
     }
 
-    // Disconnect method (blocking)
+    /**
+     * Disconnects from the broker (Blocking call).
+     */
     public void disconnect() {
         client.toBlocking().disconnect();
     }
 
-    // Subscribe method (asynchronous)
+    /**
+     * Subscribes to a topic asynchronously and sets up the message callback.
+     */
     public void subscribe(MqttSubscription sub) {
         client.subscribeWith()
                 .topicFilter(sub.getTopic())
                 .callback(sub)
                 .send()
                 .whenComplete(sub);
-
     }
 
-    // Unsubscribe method (blocking)
+    /**
+     * Unsubscribes from a specific topic (Blocking call).
+     */
     public void unsubscribe(String topic) {
         client.toBlocking().unsubscribeWith().topicFilter(topic).send();
     }
 
-    // Publish method (asynchronous)
+    /**
+     * Publishes a message to a specific topic asynchronously with QoS 1.
+     */
     public void publish(MqttPublish pub) {
         client.publishWith()
                 .topic(pub.getTopic())

@@ -20,34 +20,38 @@ import org.json.JSONObject;
 
 import java.util.UUID;
 
+/**
+ * Main Game Activity that handles the gameplay loop, parameter management,
+ * and real-time sensor data reception via MQTT.
+ */
 public class GameActivity extends AppCompatActivity {
 
     private static final String TAG = "GameActivity";
 
-    // ===== UI =====
-    private GameView gameView;
-    private Button btnStart;
-    private TextView scoreText;
-    private TextView romInfoText;
-    private TextView supportInfoText;
-    private TextView levelInfoText;
+    // UI Components
+    private GameView gameView;          // Custom view responsible for rendering the heart and obstacles
+    private Button btnStart;            // Button to begin the game session
+    private TextView scoreText;         // Displays current score
+    private TextView romInfoText;       // Displays current ROM requirement
+    private TextView supportInfoText;   // Displays current assistance/support percentage
+    private TextView levelInfoText;     // Displays the current game level
 
-    // ===== GAME STATE =====
-    private int currentScore = 0;
-    private int currentLevel = 1;
+    // Game State Variables
+    private int currentScore = 0;       // Points earned in the current session
+    private int currentLevel = 1;       // The difficulty level currently being played
 
-    // Basiswerte (werden aus SharedPrefs oder DB geladen)
-    private int currentROMValue = 30;
-    private int romIncreaseValue = 5;
-    private String supportString = "10%";
+    // Base therapy values
+    private int currentROMValue = 30;   // Starting ROM in degrees
+    private int romIncreaseValue = 5;   // How much ROM increases per level
+    private String supportString = "10%"; // Percentage of robotic assistance
 
-    // Session timing
+    // Session timing for analytics
     private long sessionStartMs;
 
-    private User currentUser;
-    private DBHelper dbHelper;
+    private User currentUser;           // The currently logged-in patient
+    private DBHelper dbHelper;          // SQLite helper for persistent storage
 
-    // ===== MQTT =====
+    // MQTT Networking
     private SimpleMqttClient mqttClient;
     private static final String MQTT_BROKER = "broker.hivemq.com";
     private static final int MQTT_PORT = 1883;
@@ -58,12 +62,14 @@ public class GameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
+        // Hide the standard Action Bar for a full-screen experience
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
-        // ===== INIT =====
+        // Initialization
         dbHelper = new DBHelper(this);
         sessionStartMs = System.currentTimeMillis();
 
+        // Verify that a user is logged in
         currentUser = (User) getIntent().getSerializableExtra("user");
         if (currentUser == null) {
             startActivity(new Intent(this, Login.class));
@@ -71,9 +77,10 @@ public class GameActivity extends AppCompatActivity {
             return;
         }
 
+        // Determine which level to load
         currentLevel = getIntent().getIntExtra("nextLevel", 1);
 
-        // ===== UI BINDING =====
+        // UI Binding
         gameView = findViewById(R.id.gameView);
         btnStart = findViewById(R.id.btnStart);
         scoreText = findViewById(R.id.scoreText);
@@ -81,34 +88,37 @@ public class GameActivity extends AppCompatActivity {
         supportInfoText = findViewById(R.id.supportInfoText);
         levelInfoText = findViewById(R.id.levelInfoText);
 
-        // Startwerte UI
         scoreText.setText("0 / 30");
 
-        // ===== SETTINGS LADEN + ANWENDEN =====
+        // Load and Apply Therapy Parameters
         loadPatientSettings();
         applySettingsToUIAndGame();
 
-        // ===== START BUTTON =====
+        // Start Button Setup
         btnStart.setOnClickListener(v -> {
-            btnStart.setVisibility(View.GONE);
+            btnStart.setVisibility(View.GONE); // Hide button once game starts
             gameView.setGameStarted(true);
 
-            // Session Startzeit neu setzen, damit echte Spieldauer stimmt
+            // Reset start time to accurately track the actual play duration
             sessionStartMs = System.currentTimeMillis();
         });
 
-        // ===== CALLBACKS =====
+        // Game Logic Callbacks
+
+        // Updates the UI whenever the score changes inside the GameView
         gameView.setOnScoreChangeListener(score -> runOnUiThread(() -> {
             currentScore = score;
             scoreText.setText(score + " / 30");
         }));
 
+        // Handles the end of the game (victory or defeat)
         gameView.setOnGameOverListener(success -> runOnUiThread(() -> {
-            // ROM im Feedback soll dem *aktuellen* Stand entsprechen
+            // Calculate final ROM for accurate feedback reporting
             int effectiveRomNow = calculateEffectiveRom();
 
-            saveSession(success);
+            saveSession(success); // Save results to local database
 
+            // Navigate to the Feedback screen with session results
             Intent intent = new Intent(GameActivity.this, FeedbackActivity.class);
             intent.putExtra("user", currentUser);
             intent.putExtra("score", currentScore);
@@ -120,22 +130,22 @@ public class GameActivity extends AppCompatActivity {
             finish();
         }));
 
-        // ===== MQTT INIT =====
+        // MQTT Setup
         mqttClient = new SimpleMqttClient(MQTT_BROKER, MQTT_PORT, UUID.randomUUID().toString());
     }
 
-    // =====================================================
-    // SETTINGS LADEN (SharedPrefs + DB Override vom Therapeuten)
-    // =====================================================
+    /**
+     * Loads patient therapy settings from SharedPreferences
+     * and overrides them with values set by a therapist in the database.
+     */
     private void loadPatientSettings() {
-
-        // 1) Defaults aus SharedPreferences
+        // Load defaults from SharedPreferences
         SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
         currentROMValue = parseIntSafe(prefs.getString("rom", "30°"), 30);
         romIncreaseValue = parseIntSafe(prefs.getString("rom_increase", "5°"), 5);
         supportString = prefs.getString("support", "10%");
 
-        // 2) DB Override: Werte, die der Therapeut gesetzt hat
+        // Database Override: Check if the therapist has assigned specific values
         Cursor s = dbHelper.getPatientSettings(currentUser.username);
         if (s != null && s.moveToFirst()) {
             currentROMValue = s.getInt(s.getColumnIndexOrThrow("rom"));
@@ -147,6 +157,9 @@ public class GameActivity extends AppCompatActivity {
         if (s != null) s.close();
     }
 
+    /**
+     * Safely parses an integer from a string, removing symbols like ° or %.
+     */
     private int parseIntSafe(String s, int fallback) {
         try {
             return Integer.parseInt(s.replace("°", "").replace("%", "").trim());
@@ -155,9 +168,10 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    // =====================================================
-    // ROM fürs Level berechnen
-    // =====================================================
+    /**
+     * Calculates the ROM required for the current level.
+     * Higher levels require a larger movement angle, capped at 90 degrees.
+     */
     private int calculateEffectiveRom() {
         int effective = currentROMValue + (currentLevel - 1) * romIncreaseValue;
         if (effective > 90) effective = 90;
@@ -165,9 +179,9 @@ public class GameActivity extends AppCompatActivity {
         return effective;
     }
 
-    // =====================================================
-    // UI + GameView setzen (mit aktuellem effective ROM)
-    // =====================================================
+    /**
+     * Updates the UI labels and configures the GameView logic with current settings.
+     */
     private void applySettingsToUIAndGame() {
         int effectiveRom = calculateEffectiveRom();
 
@@ -178,9 +192,9 @@ public class GameActivity extends AppCompatActivity {
         gameView.setROM(effectiveRom);
     }
 
-    // =====================================================
-    // SESSION SAVE (in SQLite)
-    // =====================================================
+    /**
+     * Persists the finished game session data into the SQLite database.
+     */
     private void saveSession(boolean success) {
         long end = System.currentTimeMillis();
         int durationSec = (int) ((end - sessionStartMs) / 1000);
@@ -196,17 +210,12 @@ public class GameActivity extends AppCompatActivity {
         );
     }
 
-    // =====================================================
-    // AUTO-UPDATE wenn Therapeut Werte geändert hat
-    // =====================================================
     @Override
     protected void onResume() {
         super.onResume();
         if (gameView != null) gameView.resume();
 
-        // ✅ Wenn der Therapeut ROM/ROM+ geändert hat -> neu laden
-        // Optional: nur wenn noch nicht gestartet -> damit nichts "springt"
-        // Wenn du "immer" willst, entferne die if-Abfrage.
+        // Refresh settings on resume in case the therapist updated them while the app was backgrounded
         if (btnStart != null && btnStart.getVisibility() == View.VISIBLE) {
             loadPatientSettings();
             applySettingsToUIAndGame();
@@ -219,9 +228,8 @@ public class GameActivity extends AppCompatActivity {
         if (gameView != null) gameView.pause();
     }
 
-    // =====================================================
-    // MQTT
-    // =====================================================
+    // MQTT Network Lifecycle Management
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -238,6 +246,9 @@ public class GameActivity extends AppCompatActivity {
         } catch (Exception ignored) {}
     }
 
+    /**
+     * Initiates connection to the MQTT broker and subscribes to sensor data.
+     */
     private void connectAndSubscribeMQTT() {
         if (mqttClient == null) return;
 
@@ -259,11 +270,14 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Subscribes to the sensor topic and parses incoming JSON payloads.
+     */
     private void subscribeMQTT() {
         mqttClient.subscribe(new SimpleMqttClient.MqttSubscription(this, MQTT_TOPIC) {
             @Override
             public void onMessage(String topic, String payload) {
-                // Expected: {"t":"55.0;330"}  (angle;potiRaw)
+                // Expected JSON format: {"t":"55.0;330"} -> (angle_float;poti_raw_int)
                 try {
                     JSONObject obj = new JSONObject(payload);
                     String t = obj.getString("t");
@@ -274,6 +288,7 @@ public class GameActivity extends AppCompatActivity {
                     float angle = Float.parseFloat(parts[0].trim());
                     int potiRaw = Integer.parseInt(parts[1].trim());
 
+                    // Update the GameView with new hardware data on the UI thread
                     runOnUiThread(() -> {
                         gameView.setArmAngle(angle);
                         gameView.setPotiRaw(potiRaw);

@@ -48,7 +48,7 @@
 
     <TextView
         android:paddingTop="12dp"
-        android:text="Trainingsdaten:"
+        android:text="Training data:"
         android:textStyle="bold"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>

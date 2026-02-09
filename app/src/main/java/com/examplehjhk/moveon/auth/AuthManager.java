@@ -6,12 +6,19 @@ import android.database.Cursor;
 import com.examplehjhk.moveon.data.DBHelper;
 import com.examplehjhk.moveon.domain.User;
 
+/**
+ * AuthManager handles the business logic for user authentication,
+ * including logging in and registering new accounts.
+ */
 public class AuthManager {
 
+    /**
+     * Inner class to encapsulate the result of an authentication operation.
+     */
     public static class Result {
-        public final boolean ok;
-        public final String message;
-        public final User user; // beim Login gesetzt, beim Register null
+        public final boolean ok;       // Indicates if the operation was successful
+        public final String message;   // Feedback message for the UI
+        public final User user;        // The user object
 
         private Result(boolean ok, String message, User user) {
             this.ok = ok;
@@ -19,10 +26,12 @@ public class AuthManager {
             this.user = user;
         }
 
+        // Factory method for successful results
         public static Result success(String message, User user) {
             return new Result(true, message, user);
         }
 
+        // Factory method for failed results
         public static Result fail(String message) {
             return new Result(false, message, null);
         }
@@ -31,41 +40,44 @@ public class AuthManager {
     private final DBHelper dbHelper;
 
     public AuthManager(Context context) {
-        // ApplicationContext ist safer gegen Leaks
+        // Initialize the Database with the application context to avoid leaks
         this.dbHelper = new DBHelper(context.getApplicationContext());
     }
 
     /**
-     * Login-Logik 1:1 aus deiner Login Activity.
-     * Rückgabe: Result.ok + User (wie bisher), Message für Toast.
+     * Validates credentials and retrieves user data from the database.
      */
     public Result login(String username, String password) {
+        // Trim inputs to handle accidental whitespace
         String user = username == null ? "" : username.trim();
         String pass = password == null ? "" : password.trim();
 
+        // Basic validation for empty fields
         if (user.isEmpty() || pass.isEmpty()) {
-            return Result.fail("Bitte Benutzername und Passwort eingeben");
+            return Result.fail("Please enter both username and password.");
         }
 
+        // Query the database for a matching user
         Cursor c = dbHelper.getUserForLogin(user, pass);
 
         if (c == null) {
-            return Result.fail("Ungültige Login-Daten");
+            return Result.fail("Invalid login credentials.");
         }
 
         try {
+            // Check if any record was found
             if (!c.moveToFirst()) {
-                return Result.fail("Ungültige Login-Daten");
+                return Result.fail("Invalid login credentials.");
             }
 
-            // Alle Daten aus der DB holen (wie vorher)
+            // Extract user data from the database cursor
             String fName  = c.getString(c.getColumnIndexOrThrow("first_name"));
             String lName  = c.getString(c.getColumnIndexOrThrow("last_name"));
             String uName  = c.getString(c.getColumnIndexOrThrow("username"));
             String role   = c.getString(c.getColumnIndexOrThrow("role"));
             String gender = c.getString(c.getColumnIndexOrThrow("gender"));
 
-            // User-Objekt erstellen (wie vorher)
+            // Construct the User domain object
             User loggedInUser = new User();
             loggedInUser.firstName = fName;
             loggedInUser.lastName  = lName;
@@ -73,21 +85,22 @@ public class AuthManager {
             loggedInUser.role      = role;
             loggedInUser.gender    = gender;
 
-            return Result.success("Willkommen, " + fName, loggedInUser);
+            return Result.success("Welcome, " + fName, loggedInUser);
 
         } finally {
+            // close to prevent memory leaks
             c.close();
         }
     }
 
     /**
-     * Registrierung 1:1 aus deiner Registrierung Activity.
-     * Rückgabe: Result.ok + Message für Toast.
+     * Registers a new user after validating inputs and checking for duplicates.
      */
     public Result register(String firstName, String lastName, String birthDate,
                            String phone, String username, String password, String confirm,
                            boolean isFemale, boolean isPatient) {
 
+        // Sanitize all inputs
         String f = safe(firstName);
         String l = safe(lastName);
         String b = safe(birthDate);
@@ -96,18 +109,22 @@ public class AuthManager {
         String pw = safe(password);
         String cf = safe(confirm);
 
+        // Ensure all required fields are provided
         if (f.isEmpty() || l.isEmpty() || b.isEmpty()
                 || p.isEmpty() || u.isEmpty() || pw.isEmpty() || cf.isEmpty()) {
-            return Result.fail("Bitte alle Felder ausfüllen.");
+            return Result.fail("Please fill in all fields.");
         }
 
+        // Check if passwords match
         if (!pw.equals(cf)) {
-            return Result.fail("Passwörter stimmen nicht überein.");
+            return Result.fail("Passwords do not match.");
         }
 
-        String roleText   = isPatient ? "Patient" : "Therapeut";
+        // Convert boolean flags to display strings
+        String roleText   = isPatient ? "Patient" : "Therapist";
         String genderText = isFemale  ? "Female"  : "Male";
 
+        // Attempt to insert the new user into the database
         boolean ok = dbHelper.insertUser(
                 f, l, b, p,
                 u, pw,
@@ -115,12 +132,15 @@ public class AuthManager {
         );
 
         if (!ok) {
-            return Result.fail("Fehler beim Speichern (evtl. Benutzername schon vergeben).");
+            return Result.fail("Registration failed (username might already be taken).");
         }
 
-        return Result.success(roleText + " (" + genderText + ") erfolgreich registriert.", null);
+        return Result.success(roleText + " (" + genderText + ") successfully registered.", null);
     }
 
+    /**
+     * Helper method to prevent NullPointerExceptions and trim strings.
+     */
     private String safe(String s) {
         return s == null ? "" : s.trim();
     }
