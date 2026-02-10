@@ -26,3 +26,7 @@ replay_pid*
 # Android specific #
 .gradle/
 build/
+
+# Android local SDK path
+local.properties
+
